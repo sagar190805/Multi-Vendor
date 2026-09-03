@@ -55,9 +55,8 @@ public class SellerAnalyticsController {
 
         long totalProducts = productRepository.countByVendorId(vendor.getId());
 
-        long pendingOrders = activeOrders; // using activeOrders as pending fulfillment
+        long pendingOrders = activeOrders;
 
-        // Recent Orders
         List<Map<String, Object>> recentOrders = items.stream()
                 .sorted((a, b) -> b.getOrder().getCreatedAt().compareTo(a.getOrder().getCreatedAt()))
                 .limit(5)
@@ -69,7 +68,6 @@ public class SellerAnalyticsController {
                 ))
                 .collect(java.util.stream.Collectors.toList());
 
-        // Top Products
         Map<String, Long> productSales = items.stream()
                 .filter(item -> !"CANCELLED".equals(item.getOrder().getStatus()))
                 .collect(java.util.stream.Collectors.groupingBy(item -> item.getProduct().getTitle(), java.util.stream.Collectors.summingLong(OrderItem::getQuantity)));

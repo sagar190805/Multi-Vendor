@@ -27,8 +27,6 @@ function ProtectedRoute({ children, allowedRole }) {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" />;
   
-  // Robust check: ensure user.role exists and contains the allowedRole string
-  // It handles if role is an array or a string.
   const userRoleStr = String(user.role || '').toUpperCase();
   if (allowedRole && !userRoleStr.includes(allowedRole.toUpperCase())) {
     return <Navigate to="/" />;
@@ -42,9 +40,9 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-                    <Route path="/" element={<PlatformSplash />} />
+          <Route path="/" element={<PlatformSplash />} />
 
-                    <Route path="/store" element={<BuyerLayout />}>
+          <Route path="/store" element={<BuyerLayout />}>
             <Route index element={
               <>
                 <AnimatedHero />
@@ -64,12 +62,12 @@ function App() {
             <Route path="profile" element={<ProfilePage />} />
           </Route>
 
-                    <Route path="/login" element={<Login />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/seller/onboarding" element={<ProtectedRoute><SellerOnboarding /></ProtectedRoute>} />
 
-                    <Route path="/seller" element={<ProtectedRoute allowedRole="SELLER"><SellerLayout /></ProtectedRoute>}>
+          <Route path="/seller" element={<ProtectedRoute allowedRole="SELLER"><SellerLayout /></ProtectedRoute>}>
             <Route index element={<Navigate to="dashboard" />} />
-            <Route path="onboarding" element={<SellerOnboarding />} />
             <Route path="dashboard" element={<SellerDashboardHome />} />
             <Route path="products" element={<ProductManager />} />
             <Route path="products/bulk" element={<BulkUpload />} />

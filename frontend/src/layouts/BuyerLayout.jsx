@@ -81,6 +81,9 @@ export function BuyerLayout() {
                     <div className="p-2">
                       <Link to="/store/profile" className="block px-3 py-2 text-foreground hover:bg-black/5 dark:hover:bg-white/5 rounded-lg text-sm font-medium transition-colors">My Profile</Link>
                       <Link to="/store/orders" className="block px-3 py-2 text-foreground hover:bg-black/5 dark:hover:bg-white/5 rounded-lg text-sm font-medium transition-colors">Orders</Link>
+                      {(!user.role || (!user.role.includes('SELLER') && !user.role.includes('ADMIN'))) && (
+                        <Link to="/seller/onboarding" className="block px-3 py-2 mt-1 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 rounded-lg text-sm font-medium transition-colors">Become a Seller</Link>
+                      )}
                       {(user.role === 'SELLER' || user.role?.includes('SELLER')) && (
                         <Link to="/seller/dashboard" className="block px-3 py-2 mt-1 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg text-sm font-medium transition-colors">Seller Dashboard</Link>
                       )}

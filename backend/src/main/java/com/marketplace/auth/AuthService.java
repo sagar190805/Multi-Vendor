@@ -22,7 +22,7 @@ public class AuthService {
         user.setEmail(request.getEmail());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setPhone(request.getPhone());
-        user.setRole(User.Role.valueOf(request.getRole().toUpperCase()));
+        user.setRole(User.Role.CUSTOMER);
         
         repository.save(user);
         

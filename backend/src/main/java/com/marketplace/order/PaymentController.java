@@ -61,16 +61,24 @@ public class PaymentController {
 
         try {
             int amountInPaise = order.getTotalAmount().multiply(BigDecimal.valueOf(100)).intValue();
-            JSONObject options = new JSONObject();
-            options.put("amount", amountInPaise);
-            options.put("currency", "INR");
-            options.put("receipt", order.getId().toString());
-
-            com.razorpay.Order rzpOrder = razorpayClient.orders.create(options);
+            
+            String rzpOrderIdStr;
+            if ("rzp_test_replace_me".equals(keyId) || "replace_me".equals(keyId)) {
+                // Mock Razorpay Order for testing
+                rzpOrderIdStr = "order_test_" + UUID.randomUUID().toString().substring(0, 8);
+            } else {
+                JSONObject options = new JSONObject();
+                options.put("amount", amountInPaise);
+                options.put("currency", "INR");
+                options.put("receipt", order.getId().toString());
+    
+                com.razorpay.Order rzpOrder = razorpayClient.orders.create(options);
+                rzpOrderIdStr = rzpOrder.get("id");
+            }
 
             Payment payment = new Payment();
             payment.setOrder(order);
-            payment.setRazorpayOrderId(rzpOrder.get("id"));
+            payment.setRazorpayOrderId(rzpOrderIdStr);
             payment.setAmount(order.getTotalAmount());
             payment.setCurrency("INR");
             payment.setStatus("PENDING");
@@ -78,7 +86,7 @@ public class PaymentController {
             paymentRepository.save(payment);
 
             return ResponseEntity.ok(Map.of(
-                "razorpayOrderId", rzpOrder.get("id"),
+                "razorpayOrderId", rzpOrderIdStr,
                 "amount", amountInPaise,
                 "currency", "INR",
                 "keyId", keyId

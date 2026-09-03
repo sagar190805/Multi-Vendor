@@ -105,6 +105,36 @@ public class OrderController {
         return ResponseEntity.ok(response);
     }
     
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getOrder(@PathVariable java.util.UUID id) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User buyer = userRepository.findByEmail(email).orElseThrow();
+        Order order = orderRepository.findById(id).orElseThrow();
+        if (!order.getBuyer().getId().equals(buyer.getId())) {
+            return ResponseEntity.status(403).build();
+        }
+        
+        java.util.Map<String, Object> map = new java.util.HashMap<>();
+        map.put("id", order.getId());
+        map.put("totalAmount", order.getTotalAmount());
+        map.put("status", order.getStatus());
+        map.put("createdAt", order.getCreatedAt());
+        map.put("shippingAddress", order.getShippingAddress());
+        
+        List<java.util.Map<String, Object>> itemsList = order.getItems().stream().map(i -> {
+            java.util.Map<String, Object> iMap = new java.util.HashMap<>();
+            iMap.put("id", i.getId());
+            iMap.put("productId", i.getProduct().getId());
+            iMap.put("productTitle", i.getProduct().getTitle());
+            iMap.put("quantity", i.getQuantity());
+            iMap.put("price", i.getPriceAtTime());
+            return iMap;
+        }).collect(Collectors.toList());
+        map.put("items", itemsList);
+        
+        return ResponseEntity.ok(map);
+    }
+    
     @PostMapping("/{orderId}/return")
     public ResponseEntity<?> requestReturn(@PathVariable java.util.UUID orderId) {
         Order order = orderRepository.findById(orderId).orElseThrow();
@@ -114,5 +144,25 @@ public class OrderController {
         order.setStatus("RETURN_REQUESTED");
         orderRepository.save(order);
         return ResponseEntity.ok("Return requested successfully");
+    }
+
+    @PutMapping("/{orderId}/cancel")
+    public ResponseEntity<?> cancelOrder(@PathVariable java.util.UUID orderId) {
+        Order order = orderRepository.findById(orderId).orElseThrow();
+        String currentStatus = order.getStatus();
+        if ("PAID".equals(currentStatus) || "PAYMENT_PENDING".equals(currentStatus) || "VENDOR_ACCEPTED".equals(currentStatus) || "PACKED".equals(currentStatus)) {
+            order.setStatus("CANCELLED");
+            
+            // Release stock
+            for (OrderItem item : order.getItems()) {
+                Product product = item.getProduct();
+                product.setStock(product.getStock() + item.getQuantity());
+                productRepository.save(product);
+            }
+            
+            orderRepository.save(order);
+            return ResponseEntity.ok("Cancelled");
+        }
+        return ResponseEntity.badRequest().body("Cannot cancel order in status " + currentStatus);
     }
 }

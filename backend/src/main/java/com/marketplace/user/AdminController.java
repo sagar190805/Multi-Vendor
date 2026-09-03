@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 public class AdminController {
 
     private final VendorRepository vendorRepository;
+    private final UserRepository userRepository;
     private final com.marketplace.order.OrderRepository orderRepository;
     private final com.marketplace.product.ProductRepository productRepository;
     private final com.marketplace.notification.NotificationService notificationService;
@@ -40,11 +41,15 @@ public class AdminController {
         vendor.setKycStatus("APPROVED");
         vendor.setRejectionReason(null);
         vendorRepository.save(vendor);
+
+        User user = vendor.getUser();
+        user.setRole(User.Role.SELLER);
+        userRepository.save(user);
         
         notificationService.sendEmail(
-            vendor.getUser().getEmail(),
+            user.getEmail(),
             "Seller Application Approved",
-            "Congratulations! Your store '" + vendor.getStoreName() + "' is now live on the marketplace. You can start listing products."
+            "Congratulations! Your store '" + vendor.getStoreName() + "' is now live on the marketplace. Please log out and back in to access your seller dashboard."
         );
         
         return ResponseEntity.ok("Approved");

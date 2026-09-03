@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 export function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('CUSTOMER');
   const [error, setError] = useState('');
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -14,18 +13,10 @@ export function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const userData = await register(email, password, '000000000', role);
-      const userRole = userData.role;
-      
-      if (userRole?.includes('ADMIN')) {
-        navigate('/admin/analytics');
-      } else if (userRole?.includes('SELLER')) {
-        navigate('/seller/onboarding');
-      } else {
-        navigate('/store');
-      }
+      await register(email, password, '000000000', 'CUSTOMER');
+      navigate('/store');
     } catch (err) {
-      setError('Registration failed');
+      setError('Registration failed. This email may already be in use.');
     }
   };
 
@@ -71,32 +62,6 @@ export function Register() {
               placeholder="••••••••"
               required
             />
-          </div>
-          <div>
-            <label className="text-sm font-medium mb-1.5 block">Account Type</label>
-            <div className="grid grid-cols-3 gap-3 mt-1">
-              <button
-                type="button"
-                onClick={() => setRole('CUSTOMER')}
-                className={`py-2 rounded-lg border text-sm font-medium transition-all ${role === 'CUSTOMER' ? 'bg-primary text-primary-foreground border-primary' : 'bg-transparent border-border hover:bg-muted'}`}
-              >
-                Customer
-              </button>
-              <button
-                type="button"
-                onClick={() => setRole('SELLER')}
-                className={`py-2 rounded-lg border text-sm font-medium transition-all ${role === 'SELLER' ? 'bg-primary text-primary-foreground border-primary' : 'bg-transparent border-border hover:bg-muted'}`}
-              >
-                Seller
-              </button>
-              <button
-                type="button"
-                onClick={() => setRole('ADMIN')}
-                className={`py-2 rounded-lg border text-sm font-medium transition-all ${role === 'ADMIN' ? 'bg-primary text-primary-foreground border-primary' : 'bg-transparent border-border hover:bg-muted'}`}
-              >
-                Admin
-              </button>
-            </div>
           </div>
           
           <button 

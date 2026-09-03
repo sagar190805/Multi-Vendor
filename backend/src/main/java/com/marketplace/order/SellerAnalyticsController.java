@@ -61,7 +61,7 @@ public class SellerAnalyticsController {
         List<Map<String, Object>> recentOrders = items.stream()
                 .sorted((a, b) -> b.getOrder().getCreatedAt().compareTo(a.getOrder().getCreatedAt()))
                 .limit(5)
-                .map(item -> Map.of(
+                .map(item -> java.util.Map.<String, Object>of(
                         "id", "#ORD-" + item.getOrder().getId().toString().substring(0, 6),
                         "item", item.getProduct().getTitle(),
                         "amount", "Rs. " + item.getPriceAtTime().multiply(new BigDecimal(item.getQuantity())),
@@ -77,7 +77,7 @@ public class SellerAnalyticsController {
         List<Map<String, Object>> topProducts = productSales.entrySet().stream()
                 .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
                 .limit(3)
-                .map(e -> Map.of(
+                .map(e -> java.util.Map.<String, Object>of(
                         "name", e.getKey(),
                         "sales", e.getValue()
                 ))

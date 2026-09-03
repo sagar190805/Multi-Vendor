@@ -48,4 +48,12 @@ public class PublicProductController {
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
+    @GetMapping("/{id}")
+    public org.springframework.http.ResponseEntity<ProductDTO> getProduct(@org.springframework.web.bind.annotation.PathVariable java.util.UUID id) {
+        Product p = productRepository.findById(id).orElseThrow();
+        if (!"ACTIVE".equals(p.getStatus())) {
+            return org.springframework.http.ResponseEntity.notFound().build();
+        }
+        return org.springframework.http.ResponseEntity.ok(toDTO(p));
+    }
 }

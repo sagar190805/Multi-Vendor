@@ -31,10 +31,11 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .cors(org.springframework.security.config.Customizer.withDefaults())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**", "/api/products/**").permitAll()
+                .requestMatchers("/api/auth/**", "/api/products/**", "/api/payments/webhook").permitAll()
+                .requestMatchers("/api/seller/onboarding").hasAnyRole("CUSTOMER", "SELLER")
                 .requestMatchers("/api/seller/**").hasRole("SELLER")
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/customer/**").hasAnyRole("CUSTOMER", "ADMIN")
+                .requestMatchers("/api/customer/**", "/api/payments/**").hasAnyRole("CUSTOMER", "ADMIN")
                 .anyRequest().authenticated()
             )
             .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

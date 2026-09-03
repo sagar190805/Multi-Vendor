@@ -73,13 +73,13 @@ public class SellerOrderController {
         boolean validTransition = false;
         
         // Forward path
-        if ("PLACED".equals(currentStatus) && "VENDOR_ACCEPTED".equals(newStatus)) validTransition = true;
+        if ("PAID".equals(currentStatus) && "VENDOR_ACCEPTED".equals(newStatus)) validTransition = true;
         if ("VENDOR_ACCEPTED".equals(currentStatus) && "PACKED".equals(newStatus)) validTransition = true;
         if ("PACKED".equals(currentStatus) && "SHIPPED".equals(newStatus)) validTransition = true;
         if ("SHIPPED".equals(currentStatus) && "DELIVERED".equals(newStatus)) validTransition = true;
         
         // Exit ramps (Cancellation)
-        if (("PLACED".equals(currentStatus) || "VENDOR_ACCEPTED".equals(currentStatus) || "PACKED".equals(currentStatus)) && "CANCELLED".equals(newStatus)) {
+        if (("PAID".equals(currentStatus) || "VENDOR_ACCEPTED".equals(currentStatus) || "PACKED".equals(currentStatus)) && "CANCELLED".equals(newStatus)) {
             validTransition = true;
         }
         

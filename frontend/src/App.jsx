@@ -26,7 +26,14 @@ import { PlatformSplash } from './features/pages/PlatformSplash';
 function ProtectedRoute({ children, allowedRole }) {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" />;
-  if (allowedRole && !user.role?.includes(allowedRole)) return <Navigate to="/" />;
+  
+  // Robust check: ensure user.role exists and contains the allowedRole string
+  // It handles if role is an array or a string.
+  const userRoleStr = String(user.role || '').toUpperCase();
+  if (allowedRole && !userRoleStr.includes(allowedRole.toUpperCase())) {
+    return <Navigate to="/" />;
+  }
+  
   return children;
 }
 

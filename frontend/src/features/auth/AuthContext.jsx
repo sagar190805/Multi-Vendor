@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
     if (token) {
       try {
         const decoded = jwtDecode(token);
-        setUser({ email: decoded.sub, role: decoded.roles });
+        setUser({ email: decoded.sub, role: decoded.roles || decoded.role });
       } catch (e) {
         localStorage.removeItem('token');
       }
@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }) => {
     const token = res.data.token;
     localStorage.setItem('token', token);
     const decoded = jwtDecode(token);
-    const userData = { email: decoded.sub, role: decoded.roles };
+    const userData = { email: decoded.sub, role: decoded.roles || decoded.role };
     setUser(userData);
     return userData;
   };
@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }) => {
     const token = res.data.token;
     localStorage.setItem('token', token);
     const decoded = jwtDecode(token);
-    const userData = { email: decoded.sub, role: decoded.roles };
+    const userData = { email: decoded.sub, role: decoded.roles || decoded.role };
     setUser(userData);
     return userData;
   };

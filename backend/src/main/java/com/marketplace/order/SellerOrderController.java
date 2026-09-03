@@ -20,6 +20,7 @@ public class SellerOrderController {
     private final com.marketplace.user.UserRepository userRepository;
     private final OrderRepository orderRepository;
     private final com.marketplace.product.ProductRepository productRepository;
+    private final com.marketplace.notification.NotificationService notificationService;
 
     @GetMapping
     public ResponseEntity<?> getSellerOrders() {
@@ -98,6 +99,13 @@ public class SellerOrderController {
         }
         
         orderRepository.save(order);
+        
+        notificationService.sendEmail(
+            order.getBuyer().getEmail(),
+            "Order Status Update: " + newStatus,
+            "Your order #" + order.getId() + " has been updated by the seller.\nNew Status: " + newStatus
+        );
+        
         return ResponseEntity.ok("Status updated to " + newStatus);
     }
 }

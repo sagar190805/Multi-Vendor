@@ -15,6 +15,7 @@ public class AdminController {
     private final VendorRepository vendorRepository;
     private final com.marketplace.order.OrderRepository orderRepository;
     private final com.marketplace.product.ProductRepository productRepository;
+    private final com.marketplace.notification.NotificationService notificationService;
 
     @GetMapping("/vendors")
     public ResponseEntity<List<Vendor>> getVendors(@RequestParam(required = false) String status) {
@@ -39,7 +40,13 @@ public class AdminController {
         vendor.setKycStatus("APPROVED");
         vendor.setRejectionReason(null);
         vendorRepository.save(vendor);
-        // publish vendor.approved event (notification to seller) - to be implemented
+        
+        notificationService.sendEmail(
+            vendor.getUser().getEmail(),
+            "Seller Application Approved",
+            "Congratulations! Your store '" + vendor.getStoreName() + "' is now live on the marketplace. You can start listing products."
+        );
+        
         return ResponseEntity.ok("Approved");
     }
 
@@ -50,7 +57,13 @@ public class AdminController {
         vendor.setKycStatus("REJECTED");
         vendor.setRejectionReason(body.get("reason"));
         vendorRepository.save(vendor);
-        // publish vendor.rejected event - to be implemented
+        
+        notificationService.sendEmail(
+            vendor.getUser().getEmail(),
+            "Action Required: Seller Application Update",
+            "Your application for '" + vendor.getStoreName() + "' requires attention.\nReason: " + vendor.getRejectionReason() + "\nPlease log in to update your details."
+        );
+        
         return ResponseEntity.ok("Rejected");
     }
 
@@ -98,6 +111,13 @@ public class AdminController {
         com.marketplace.product.Product product = productRepository.findById(id).orElseThrow();
         product.setStatus("BANNED");
         productRepository.save(product);
+        
+        notificationService.sendEmail(
+            product.getVendor().getUser().getEmail(),
+            "Product Removed from Marketplace",
+            "Your product '" + product.getTitle() + "' has been banned by an administrator.\nReason: " + body.get("reason")
+        );
+        
         return ResponseEntity.ok("Banned");
     }
 
@@ -106,6 +126,13 @@ public class AdminController {
         com.marketplace.product.Product product = productRepository.findById(id).orElseThrow();
         product.setStatus("ACTIVE");
         productRepository.save(product);
+        
+        notificationService.sendEmail(
+            product.getVendor().getUser().getEmail(),
+            "Product Restored",
+            "Your product '" + product.getTitle() + "' has been unbanned and is now visible on the marketplace again."
+        );
+        
         return ResponseEntity.ok("Unbanned");
     }
 

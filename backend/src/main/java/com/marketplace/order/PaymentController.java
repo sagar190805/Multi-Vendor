@@ -32,6 +32,7 @@ public class PaymentController {
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final com.marketplace.notification.NotificationService notificationService;
 
     @Value("${razorpay.key.id}")
     private String keyId;
@@ -119,6 +120,20 @@ public class PaymentController {
                 if ("PAYMENT_PENDING".equals(order.getStatus())) {
                     order.setStatus("PAID");
                     orderRepository.save(order);
+                    
+                    notificationService.sendEmail(
+                        order.getBuyer().getEmail(),
+                        "Order Confirmed - Payment Received (Fallback)",
+                        "We have received your payment for Order #" + order.getId() + ".\nTotal: Rs. " + order.getTotalAmount()
+                    );
+                    
+                    order.getItems().stream().map(item -> item.getVendor()).distinct().forEach(vendor -> {
+                        notificationService.sendEmail(
+                            vendor.getUser().getEmail(),
+                            "New Order Received!",
+                            "A buyer has paid for a new order containing your products. Please log in to your dashboard to view Order #" + order.getId()
+                        );
+                    });
                 }
             }
 
@@ -163,7 +178,20 @@ public class PaymentController {
                 order.setStatus("PAID");
                 orderRepository.save(order);
                 
-                // Note: Stock was reserved in checkout step. Moving to PAID means it stays reserved/deducted permanently.
+                notificationService.sendEmail(
+                    order.getBuyer().getEmail(),
+                    "Order Confirmed - Payment Received",
+                    "We have received your payment for Order #" + order.getId() + ".\nTotal: Rs. " + order.getTotalAmount()
+                );
+                
+                // Notify sellers
+                order.getItems().stream().map(item -> item.getVendor()).distinct().forEach(vendor -> {
+                    notificationService.sendEmail(
+                        vendor.getUser().getEmail(),
+                        "New Order Received!",
+                        "A buyer has paid for a new order containing your products. Please log in to your dashboard to view Order #" + order.getId()
+                    );
+                });
 
             } else if ("payment.failed".equals(eventType)) {
                 payment.setStatus("FAILED");
@@ -173,13 +201,18 @@ public class PaymentController {
                 Order order = payment.getOrder();
                 if (!"CANCELLED".equals(order.getStatus())) {
                     order.setStatus("CANCELLED");
-                    // Release reserved stock
                     for (OrderItem item : order.getItems()) {
                         Product product = item.getProduct();
                         product.setStock(product.getStock() + item.getQuantity());
                         productRepository.save(product);
                     }
                     orderRepository.save(order);
+                    
+                    notificationService.sendEmail(
+                        order.getBuyer().getEmail(),
+                        "Payment Failed - Order Cancelled",
+                        "Your payment for Order #" + order.getId() + " failed. The order has been cancelled."
+                    );
                 }
             }
 

@@ -283,17 +283,23 @@ export const VendorApproval = () => {
 export const CatalogModeration = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   React.useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [search, statusFilter]);
 
   const fetchProducts = async () => {
     try {
       setLoading(true);
       const api = (await import('../../api/axiosInstance')).default;
-      const res = await api.get('/admin/products');
-      setItems(res.data.filter(p => p.status !== 'BANNED'));
+      let url = '/admin/products?';
+      if (search) url += `search=${search}&`;
+      if (statusFilter) url += `status=${statusFilter}&`;
+      
+      const res = await api.get(url);
+      setItems(res.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -301,41 +307,87 @@ export const CatalogModeration = () => {
     }
   };
 
-  const handleBan = async (id) => {
+  const handleAction = async (id, action) => {
     try {
       const api = (await import('../../api/axiosInstance')).default;
-      await api.post(`/admin/products/${id}/status`, { status: 'BANNED' });
-      setItems(prev => prev.filter(item => item.id !== id));
+      if (action === 'ban') {
+        const reason = prompt("Reason for banning this product?");
+        if (!reason) return;
+        await api.put(`/admin/products/${id}/ban`, { reason });
+      } else {
+        await api.put(`/admin/products/${id}/unban`);
+      }
+      fetchProducts();
     } catch (err) {
       console.error(err);
-      alert('Failed to ban product');
+      alert('Action failed');
     }
   };
 
   return (
     <div className="space-y-8 font-sans">
-      <PageHeader title="Catalog Moderation" subtitle={`${items.length} active products available for review.`} />
-      {loading ? (
-        <div className="p-12 text-center">Loading catalog...</div>
-      ) : items.length === 0 ? (
-        <EmptyState icon={<ListChecks className="w-8 h-8" />} title="Catalog is empty!" description="No active products to review." />
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {items.map(item => (
-            <Card key={item.id} className="p-6 relative hover:shadow-lg transition-all">
-              <div className="aspect-video bg-white dark:bg-white/5 rounded-2xl mb-5 flex items-center justify-center p-2 border border-black/5 dark:border-white/10">
-                <img src={item.imageUrl || 'https://via.placeholder.com/300'} alt={item.title} className="w-full h-full object-contain mix-blend-multiply" />
-              </div>
-              <p className="text-xs font-bold text-muted-foreground mb-1">{item.vendor?.storeName || 'Unknown Vendor'}</p>
-              <h4 className="font-bold text-lg mb-1 line-clamp-1">{item.title}</h4>
-              <p className="text-sm text-emerald-600 dark:text-emerald-400 font-bold mb-5">₹{item.price?.toLocaleString('en-IN')}</p>
-              <Button variant="danger" className="w-full" onClick={() => {
-                if (confirm('Are you sure you want to ban this product? It will be hidden from buyers.')) handleBan(item.id);
-              }}>Ban & Take Down</Button>
-            </Card>
-          ))}
-        </div>
-      )}
+      <PageHeader 
+        title="Catalog Moderation" 
+        subtitle={`${items.length} products available.`} 
+        action={
+          <div className="flex gap-4">
+            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="bg-white/50 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-2 outline-none">
+              <option value="">All Statuses</option>
+              <option value="ACTIVE">Active</option>
+              <option value="BANNED">Banned</option>
+            </select>
+            <input 
+              type="text" 
+              placeholder="Search products..." 
+              value={search} 
+              onChange={e => setSearch(e.target.value)}
+              className="bg-white/50 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-2 outline-none w-64"
+            />
+          </div>
+        }
+      />
+      
+      <Card className="p-0 overflow-hidden">
+        <Table>
+          <Thead>
+            <Tr>
+              <Th>Product</Th>
+              <Th>Vendor</Th>
+              <Th>Category</Th>
+              <Th>Price</Th>
+              <Th>Status</Th>
+              <Th>Action</Th>
+            </Tr>
+          </Thead>
+          <Tbody>
+            {loading ? (
+              <Tr><Td colSpan="6" className="text-center p-8">Loading...</Td></Tr>
+            ) : items.length === 0 ? (
+              <Tr><Td colSpan="6" className="text-center p-8">No products found.</Td></Tr>
+            ) : items.map(item => (
+              <Tr key={item.id}>
+                <Td className="font-bold flex items-center gap-3">
+                  <img src={item.imageUrl || 'https://via.placeholder.com/40'} className="w-10 h-10 object-contain bg-white rounded-lg p-1" />
+                  <span className="line-clamp-1">{item.title}</span>
+                </Td>
+                <Td className="text-muted-foreground">{item.vendor?.storeName || 'Unknown'}</Td>
+                <Td className="text-muted-foreground">{item.category}</Td>
+                <Td className="font-bold">₹{item.price?.toLocaleString('en-IN')}</Td>
+                <Td>
+                  <Badge variant={item.status === 'BANNED' ? 'danger' : 'success'}>{item.status}</Badge>
+                </Td>
+                <Td>
+                  {item.status === 'BANNED' ? (
+                    <Button variant="outline" size="sm" onClick={() => handleAction(item.id, 'unban')}>Unban</Button>
+                  ) : (
+                    <Button variant="danger" size="sm" onClick={() => handleAction(item.id, 'ban')}>Ban</Button>
+                  )}
+                </Td>
+              </Tr>
+            ))}
+          </Tbody>
+        </Table>
+      </Card>
     </div>
   );
 };

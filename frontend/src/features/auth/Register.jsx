@@ -74,7 +74,7 @@ export function Register() {
           </div>
           <div>
             <label className="text-sm font-medium mb-1.5 block">Account Type</label>
-            <div className="grid grid-cols-2 gap-3 mt-1">
+            <div className="grid grid-cols-3 gap-3 mt-1">
               <button
                 type="button"
                 onClick={() => setRole('CUSTOMER')}
@@ -88,6 +88,13 @@ export function Register() {
                 className={`py-2 rounded-lg border text-sm font-medium transition-all ${role === 'SELLER' ? 'bg-primary text-primary-foreground border-primary' : 'bg-transparent border-border hover:bg-muted'}`}
               >
                 Seller
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole('ADMIN')}
+                className={`py-2 rounded-lg border text-sm font-medium transition-all ${role === 'ADMIN' ? 'bg-primary text-primary-foreground border-primary' : 'bg-transparent border-border hover:bg-muted'}`}
+              >
+                Admin
               </button>
             </div>
           </div>

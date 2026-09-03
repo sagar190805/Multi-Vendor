@@ -42,6 +42,26 @@ const topProducts = [
 ];
 
 export const SellerDashboardHome = () => {
+  const [stats, setStats] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const api = (await import('../../api/axiosInstance')).default;
+        const res = await api.get('/seller/analytics/dashboard');
+        setStats(res.data);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboard();
+  }, []);
+
+  if (loading) return <div className="p-24 text-center">Loading dashboard...</div>;
+
   return (
     <div className="space-y-8 font-sans">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -49,40 +69,38 @@ export const SellerDashboardHome = () => {
           <h1 className="text-4xl font-black tracking-tight mb-2">Welcome back, Seller!</h1>
           <p className="text-muted-foreground font-medium text-lg">Here's what's happening with your store today.</p>
         </div>
-        <div className="flex items-center gap-3 bg-white/50 dark:bg-white/5 backdrop-blur-xl px-4 py-2 rounded-xl border border-black/5 dark:border-white/10 shadow-sm">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span className="font-bold text-sm">Store is live</span>
+        <div className="flex items-center gap-3">
+          <QuickActionButton icon={<ShoppingBag className="w-4 h-4" />} label="Add Product" />
+          <QuickActionButton icon={<AlertTriangle className="w-4 h-4 text-amber-500" />} label="Disputes (0)" variant="secondary" />
         </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <AnimatedStatCard title="Revenue (7d)" value={542860} prefix="₹" trend="+24% vs last week" trendUp={true} icon={<IndianRupee className="w-5 h-5" />} color="primary" />
-        <AnimatedStatCard title="Orders" value={128} trend="12 to fulfill" trendUp={true} icon={<ShoppingBag className="w-5 h-5" />} color="blue" />
-        <AnimatedStatCard title="Products Listed" value={45} trend="4 low stock" trendUp={false} icon={<Package className="w-5 h-5" />} color="purple" />
-        <AnimatedStatCard title="Avg. Rating" value={48} suffix="/50" trend="98% positive" trendUp={true} icon={<Star className="w-5 h-5" />} color="amber" />
+        <AnimatedStatCard title="Total Revenue" value={stats?.totalRevenue || 0} prefix="₹" trend="Lifetime" trendUp={true} icon={<IndianRupee className="w-5 h-5" />} color="primary" />
+        <AnimatedStatCard title="Active Orders" value={stats?.activeOrders || 0} trend="Pending fulfillment" trendUp={true} icon={<Package className="w-5 h-5" />} color="blue" />
+        <AnimatedStatCard title="Completed Orders" value={stats?.completedOrders || 0} trend="Delivered" trendUp={true} icon={<Truck className="w-5 h-5" />} color="emerald" />
+        <AnimatedStatCard title="Total Products" value={stats?.totalProducts || 0} trend="Live catalog" trendUp={true} icon={<Star className="w-5 h-5" />} color="amber" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2 p-0 overflow-hidden">
-          <div className="p-6 border-b border-black/5 dark:border-white/10">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-xl">Revenue (7 Days)</h3>
-              <Badge variant="success">+24%</Badge>
-            </div>
+          <div className="p-6 border-b border-black/5 dark:border-white/10 flex justify-between items-center">
+            <h3 className="font-bold text-xl">Revenue Overview</h3>
+            <Badge variant="default">Demo Chart</Badge>
           </div>
-          <div className="p-4 h-56">
+          <div className="p-4 h-72">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={revenueData}>
                 <defs>
-                  <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#E05D36" stopOpacity={0.3}/>
                     <stop offset="95%" stopColor="#E05D36" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="name" tick={{ fontSize: 12, fontWeight: 600 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 12, fontWeight: 600 }} axisLine={false} tickLine={false} width={50} tickFormatter={(v) => `₹${(v/1000).toFixed(0)}k`} />
-                <Tooltip formatter={(v) => [`₹${v.toLocaleString('en-IN')}`, 'Revenue']} contentStyle={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.05)', fontWeight: 'bold' }} />
-                <Area type="monotone" dataKey="revenue" stroke="#E05D36" strokeWidth={2.5} fillOpacity={1} fill="url(#grad)" />
+                <XAxis dataKey="name" tick={{ fontSize: 12, fontWeight: 500 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${v/1000}k`} width={50} />
+                <Tooltip formatter={(v) => [`₹${v}`, 'Revenue']} contentStyle={{ borderRadius: '12px' }} />
+                <Area type="monotone" dataKey="revenue" stroke="#E05D36" strokeWidth={3} fill="url(#colorRev)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -135,13 +153,13 @@ export const SellerDashboardHome = () => {
               </Tr>
             </Thead>
             <Tbody>
-              {recentOrders.map((order, i) => (
+              {(stats?.recentOrders || []).map((order, i) => (
                 <Tr key={i}>
                   <Td className="font-bold text-sm">{order.id}</Td>
                   <Td className="font-medium text-muted-foreground text-sm">{order.item}</Td>
                   <Td className="font-bold text-sm">{order.amount}</Td>
                   <Td>
-                    <Badge variant={order.status === 'Delivered' ? 'success' : order.status === 'Shipped' ? 'primary' : 'warning'}>
+                    <Badge variant={order.status === 'DELIVERED' ? 'success' : order.status === 'SHIPPED' ? 'primary' : 'warning'}>
                       {order.status}
                     </Badge>
                   </Td>
@@ -156,15 +174,15 @@ export const SellerDashboardHome = () => {
             <h3 className="font-bold text-xl mb-5">Quick Actions</h3>
             <div className="space-y-2">
               <QuickActionButton icon={<Package className="w-4 h-4" />} label="Add New Product" description="List a new item for sale" color="primary" />
-              <QuickActionButton icon={<Truck className="w-4 h-4" />} label="Print Shipping Labels" description="12 orders ready" color="default" />
-              <QuickActionButton icon={<AlertTriangle className="w-4 h-4" />} label="Resolve Dispute" description="1 escalated case" color="danger" />
+              <QuickActionButton icon={<Truck className="w-4 h-4" />} label="Print Shipping Labels" description={`${stats?.pendingOrders || 0} orders ready`} color="default" />
+              <QuickActionButton icon={<AlertTriangle className="w-4 h-4" />} label="Resolve Dispute" description="0 escalated cases" color="danger" />
             </div>
           </Card>
 
           <Card>
             <h3 className="font-bold text-xl mb-5">Top Products</h3>
             <div className="space-y-4">
-              {topProducts.map((p, i) => (
+              {(stats?.topProducts || []).map((p, i) => (
                 <div key={i} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-xl bg-black/5 dark:bg-white/5 flex items-center justify-center font-bold text-sm text-muted-foreground">
@@ -176,11 +194,7 @@ export const SellerDashboardHome = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-sm text-emerald-600 dark:text-emerald-400">{p.revenue}</p>
-                    <div className="flex items-center gap-1 justify-end">
-                      <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                      <span className="text-xs font-bold text-muted-foreground">{p.rating}</span>
-                    </div>
+                    <p className="font-bold text-sm text-emerald-600 dark:text-emerald-400">---</p>
                   </div>
                 </div>
               ))}

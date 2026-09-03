@@ -55,11 +55,42 @@ public class SellerAnalyticsController {
 
         long totalProducts = productRepository.countByVendorId(vendor.getId());
 
+        long pendingOrders = activeOrders; // using activeOrders as pending fulfillment
+
+        // Recent Orders
+        List<Map<String, Object>> recentOrders = items.stream()
+                .sorted((a, b) -> b.getOrder().getCreatedAt().compareTo(a.getOrder().getCreatedAt()))
+                .limit(5)
+                .map(item -> Map.of(
+                        "id", "#ORD-" + item.getOrder().getId().toString().substring(0, 6),
+                        "item", item.getProduct().getTitle(),
+                        "amount", "Rs. " + item.getPriceAtTime().multiply(new BigDecimal(item.getQuantity())),
+                        "status", item.getOrder().getStatus()
+                ))
+                .collect(java.util.stream.Collectors.toList());
+
+        // Top Products
+        Map<String, Long> productSales = items.stream()
+                .filter(item -> !"CANCELLED".equals(item.getOrder().getStatus()))
+                .collect(java.util.stream.Collectors.groupingBy(item -> item.getProduct().getTitle(), java.util.stream.Collectors.summingLong(OrderItem::getQuantity)));
+        
+        List<Map<String, Object>> topProducts = productSales.entrySet().stream()
+                .sorted((a, b) -> b.getValue().compareTo(a.getValue()))
+                .limit(3)
+                .map(e -> Map.of(
+                        "name", e.getKey(),
+                        "sales", e.getValue()
+                ))
+                .collect(java.util.stream.Collectors.toList());
+
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalRevenue", totalRevenue);
         stats.put("activeOrders", activeOrders);
         stats.put("completedOrders", completedOrders);
         stats.put("totalProducts", totalProducts);
+        stats.put("pendingOrders", pendingOrders);
+        stats.put("recentOrders", recentOrders);
+        stats.put("topProducts", topProducts);
 
         return ResponseEntity.ok(stats);
     }

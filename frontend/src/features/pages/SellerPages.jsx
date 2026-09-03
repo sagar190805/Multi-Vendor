@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import api from '../../api/axiosInstance';
 import { getProducts } from '../../data/mockProducts';
 import { Plus, Search as SearchIcon, Package, LayoutGrid, LayoutList, Upload, IndianRupee } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
@@ -12,53 +13,169 @@ import { AnimatedStatCard } from '../../components/ui/AnimatedStatCard';
 import { SellerProductCard } from '../../components/ui/SellerProductCard';
 import { OrderTimeline } from '../../components/ui/OrderTimeline';
 
-export const SellerOnboarding = () => (
-  <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 font-sans">
-    <div className="w-full max-w-2xl bg-white/50 dark:bg-white/5 border border-black/5 dark:border-white/10 rounded-[32px] p-12 shadow-2xl backdrop-blur-xl">
-      <h1 className="text-4xl font-bold tracking-tight mb-3">Welcome to Seller Center</h1>
-      <p className="text-muted-foreground mb-10 text-lg">Let's set up your storefront in 3 simple steps.</p>
-      <div className="flex justify-between mb-12 relative">
-        <div className="absolute top-1/2 left-0 w-full h-0.5 bg-black/5 dark:bg-white/10 -z-10 -translate-y-1/2"></div>
-        {[1, 2, 3].map(step => (
-          <div key={step} className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${step === 1 ? 'bg-primary text-primary-foreground shadow-lg' : 'bg-white dark:bg-black border border-black/10 dark:border-white/10 text-muted-foreground'}`}>
-            {step}
-          </div>
-        ))}
-      </div>
-      <div className="space-y-6">
-        <input type="text" placeholder="Store Name" className="w-full p-4 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all font-medium" />
-        <textarea placeholder="Store Description" className="w-full p-4 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all font-medium h-32 resize-none" />
-        <button className="w-full py-4 bg-primary text-primary-foreground rounded-2xl font-bold text-lg hover:opacity-90 transition-all active:scale-[0.98] shadow-md">Continue</button>
-      </div>
-    </div>
-  </div>
-);
-
-export const ProductManager = () => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [view, setView] = useState('grid');
+export const SellerOnboarding = () => {
+  const [step, setStep] = useState(1);
+  const [storeName, setStoreName] = useState('');
+  const [description, setDescription] = useState('');
+  const [businessDetails, setBusinessDetails] = useState('');
+  const [bankDetails, setBankDetails] = useState('');
+  const [status, setStatus] = useState('LOADING');
 
   React.useEffect(() => {
-    getProducts().then(data => {
-      const sellerProducts = data.slice(0, 12).map(p => ({
-        ...p,
-        stock: Math.floor(Math.random() * 60),
-        sku: `SKU-${p.id}`
-      }));
-      setProducts(sellerProducts);
-      setLoading(false);
-    });
+    const fetchStatus = async () => {
+      try {
+        const api = (await import('../../api/axiosInstance')).default;
+        const res = await api.get('/seller/onboarding');
+        setStatus(res.data.kycStatus);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchStatus();
   }, []);
 
-  const updateStock = (id, newStock) => {
-    if (newStock < 0) return;
-    setProducts(prev => prev.map(p => p.id === id ? { ...p, stock: newStock } : p));
+  const handleSubmit = async () => {
+    try {
+      const api = (await import('../../api/axiosInstance')).default;
+      await api.post('/seller/onboarding', {
+        storeName, description, businessDetails, bankDetails
+      });
+      setStatus('PENDING');
+    } catch (err) {
+      console.error(err);
+      alert("Failed to submit onboarding");
+    }
   };
 
-  const removeProduct = (id) => {
-    setProducts(prev => prev.filter(p => p.id !== id));
+  if (status === 'LOADING') return <div className="p-24 text-center">Loading...</div>;
+  if (status === 'PENDING') return <div className="p-24 text-center"><h1 className="text-3xl font-bold">Application Pending</h1><p>The admin team is reviewing your application.</p></div>;
+  if (status === 'APPROVED') return <div className="p-24 text-center"><h1 className="text-3xl font-bold text-emerald-500">Approved!</h1><p>You can now access your dashboard.</p><Button onClick={() => window.location.href='/seller/dashboard'} className="mt-4">Go to Dashboard</Button></div>;
+  if (status === 'REJECTED') return <div className="p-24 text-center"><h1 className="text-3xl font-bold text-red-500">Application Rejected</h1><p>Please contact support.</p></div>;
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 font-sans">
+      <div className="w-full max-w-2xl bg-white/50 dark:bg-white/5 border border-black/5 dark:border-white/10 rounded-[32px] p-12 shadow-2xl backdrop-blur-xl">
+        <h1 className="text-4xl font-bold tracking-tight mb-3">Welcome to Seller Center</h1>
+        <p className="text-muted-foreground mb-10 text-lg">Let's set up your storefront.</p>
+        
+        <div className="flex justify-between mb-12 relative">
+          <div className="absolute top-1/2 left-0 w-full h-0.5 bg-black/5 dark:bg-white/10 -z-10 -translate-y-1/2"></div>
+          {[1, 2].map(s => (
+            <div key={s} className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${s === step ? 'bg-primary text-primary-foreground shadow-lg' : 'bg-white dark:bg-black border border-black/10 dark:border-white/10 text-muted-foreground'}`}>
+              {s}
+            </div>
+          ))}
+        </div>
+
+        {step === 1 && (
+          <div className="space-y-6">
+            <input type="text" placeholder="Store Name" value={storeName} onChange={e => setStoreName(e.target.value)} className="w-full p-4 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all font-medium" />
+            <textarea placeholder="Store Description" value={description} onChange={e => setDescription(e.target.value)} className="w-full p-4 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all font-medium h-32 resize-none" />
+            <button onClick={() => setStep(2)} className="w-full py-4 bg-primary text-primary-foreground rounded-2xl font-bold text-lg hover:opacity-90 transition-all active:scale-[0.98] shadow-md">Next: KYC & Bank</button>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="space-y-6">
+            <input type="text" placeholder="Business Details (Tax ID, Address)" value={businessDetails} onChange={e => setBusinessDetails(e.target.value)} className="w-full p-4 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all font-medium" />
+            <input type="text" placeholder="Bank Account Number" value={bankDetails} onChange={e => setBankDetails(e.target.value)} className="w-full p-4 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all font-medium" />
+            <div className="flex gap-4">
+              <button onClick={() => setStep(1)} className="w-1/3 py-4 bg-black/5 dark:bg-white/5 text-foreground rounded-2xl font-bold text-lg hover:opacity-90 transition-all">Back</button>
+              <button onClick={handleSubmit} className="w-2/3 py-4 bg-primary text-primary-foreground rounded-2xl font-bold text-lg hover:opacity-90 transition-all active:scale-[0.98] shadow-md">Submit Application</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export const ProductManager = () => {
+  const [view, setView] = useState('grid');
+  const [search, setSearch] = useState('');
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isAdding, setIsAdding] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({});
+
+  React.useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const api = (await import('../../api/axiosInstance')).default;
+      const res = await api.get('/seller/products');
+      setProducts(res.data.map(p => ({
+        id: p.id,
+        title: p.title,
+        price: p.price,
+        stock: p.stock,
+        category: p.category,
+        description: p.description,
+        sku: `SKU-${p.id.substring(0,6)}`,
+        image: p.imageUrl || 'https://via.placeholder.com/300'
+      })));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddProduct = async () => {
+    try {
+      setIsAdding(true);
+      const api = (await import('../../api/axiosInstance')).default;
+      await api.post('/seller/products', {
+        title: 'New Product ' + Math.floor(Math.random() * 1000),
+        price: 999,
+        stock: 10,
+        category: 'Electronics',
+        description: 'A great new product added via the API'
+      });
+      await fetchProducts();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  const startEdit = (product) => {
+    setEditingId(product.id);
+    setEditForm({ ...product });
+  };
+
+  const saveEdit = async () => {
+    try {
+      const api = (await import('../../api/axiosInstance')).default;
+      await api.put(`/seller/products/${editingId}`, {
+        title: editForm.title,
+        price: parseFloat(editForm.price),
+        stock: parseInt(editForm.stock),
+        category: editForm.category,
+        description: editForm.description,
+        imageUrl: editForm.image
+      });
+      setEditingId(null);
+      await fetchProducts();
+    } catch (e) {
+      console.error(e);
+      alert('Failed to update product');
+    }
+  };
+
+  const removeProduct = async (id) => {
+    try {
+      const api = (await import('../../api/axiosInstance')).default;
+      await api.delete(`/seller/products/${id}`);
+      setProducts(prev => prev.filter(p => p.id !== id));
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const filtered = products.filter(p => p.title.toLowerCase().includes(search.toLowerCase()));
@@ -80,16 +197,8 @@ export const ProductManager = () => {
                 className="bg-transparent border-none outline-none w-full text-sm font-medium"
               />
             </div>
-            <div className="flex items-center bg-white/50 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl p-1 gap-0.5">
-              <button onClick={() => setView('grid')} className={`p-2 rounded-lg transition-colors ${view === 'grid' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-black/5 dark:hover:bg-white/10'}`}>
-                <LayoutGrid className="w-4 h-4" />
-              </button>
-              <button onClick={() => setView('list')} className={`p-2 rounded-lg transition-colors ${view === 'list' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-black/5 dark:hover:bg-white/10'}`}>
-                <LayoutList className="w-4 h-4" />
-              </button>
-            </div>
-            <Button size="sm" className="flex items-center gap-2 whitespace-nowrap">
-              <Plus className="w-4 h-4" /> Add Product
+            <Button size="sm" onClick={handleAddProduct} disabled={isAdding} className="flex items-center gap-2 whitespace-nowrap">
+              <Plus className="w-4 h-4" /> {isAdding ? 'Adding...' : 'Add Product'}
             </Button>
           </div>
         }
@@ -101,18 +210,6 @@ export const ProductManager = () => {
         </div>
       ) : filtered.length === 0 ? (
         <EmptyState icon={<Package className="w-8 h-8" />} title="No products found." description="Try a different search or add a new product." />
-      ) : view === 'grid' ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {filtered.map(p => (
-            <SellerProductCard
-              key={p.id}
-              product={p}
-              onEdit={() => {}}
-              onDelete={removeProduct}
-              onStockChange={updateStock}
-            />
-          ))}
-        </div>
       ) : (
         <Card className="p-0 overflow-hidden">
           <Table>
@@ -134,18 +231,28 @@ export const ProductManager = () => {
                         <img src={p.image} alt={p.title} className="w-full h-full object-contain mix-blend-multiply" />
                       </div>
                       <div>
-                        <p className="font-bold text-sm line-clamp-1">{p.title}</p>
+                        {editingId === p.id ? (
+                          <input type="text" className="w-full p-1 border rounded" value={editForm.title} onChange={e => setEditForm({...editForm, title: e.target.value})} />
+                        ) : (
+                          <p className="font-bold text-sm line-clamp-1">{p.title}</p>
+                        )}
                         <p className="text-muted-foreground text-xs font-medium">{p.sku}</p>
                       </div>
                     </div>
                   </Td>
-                  <Td className="font-bold text-emerald-600 dark:text-emerald-400">₹{p.price.toLocaleString('en-IN')}</Td>
+                  <Td className="font-bold text-emerald-600 dark:text-emerald-400">
+                    {editingId === p.id ? (
+                      <input type="number" className="w-20 p-1 border rounded text-black dark:text-white" value={editForm.price} onChange={e => setEditForm({...editForm, price: e.target.value})} />
+                    ) : (
+                      `₹${p.price.toLocaleString('en-IN')}`
+                    )}
+                  </Td>
                   <Td>
-                    <div className="flex items-center bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl p-1 w-fit">
-                      <button onClick={() => updateStock(p.id, p.stock - 1)} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-black/10 dark:hover:bg-white/10 font-bold text-sm">−</button>
+                    {editingId === p.id ? (
+                      <input type="number" className="w-16 p-1 border rounded text-black dark:text-white" value={editForm.stock} onChange={e => setEditForm({...editForm, stock: e.target.value})} />
+                    ) : (
                       <span className="w-10 text-center font-black text-sm">{p.stock}</span>
-                      <button onClick={() => updateStock(p.id, p.stock + 1)} className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-black/10 dark:hover:bg-white/10 font-bold text-sm">+</button>
-                    </div>
+                    )}
                   </Td>
                   <Td>
                     <Badge variant={p.stock > 10 ? 'success' : p.stock > 0 ? 'warning' : 'danger'}>
@@ -154,8 +261,17 @@ export const ProductManager = () => {
                   </Td>
                   <Td>
                     <div className="flex gap-2">
-                      <Button variant="secondary" size="sm">Edit</Button>
-                      <Button variant="danger" size="sm" onClick={() => removeProduct(p.id)}>Remove</Button>
+                      {editingId === p.id ? (
+                        <>
+                          <Button variant="primary" size="sm" onClick={saveEdit}>Save</Button>
+                          <Button variant="secondary" size="sm" onClick={() => setEditingId(null)}>Cancel</Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button variant="secondary" size="sm" onClick={() => startEdit(p)}>Edit</Button>
+                          <Button variant="danger" size="sm" onClick={() => removeProduct(p.id)}>Remove</Button>
+                        </>
+                      )}
                     </div>
                   </Td>
                 </Tr>
@@ -206,23 +322,54 @@ export const BulkUpload = () => (
 export const OrderManager = () => {
   const [filter, setFilter] = useState('pending');
   const [expandedOrder, setExpandedOrder] = useState(null);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const orders = [
-    { id: '#ORD-8892', item: 'Sony Alpha a7 IV', customer: 'J. Alvarez', amount: 'Rs. 1,49,900', status: 'placed', date: '02 Sep 2026, 9:30 AM' },
-    { id: '#ORD-8893', item: '2× Ceramic Mug Set', customer: 'R. Kapoor', amount: 'Rs. 1,199', status: 'packed', date: '02 Sep 2026, 8:00 AM' },
-    { id: '#ORD-8879', item: 'MacBook Pro 16"', customer: 'S. Lee', amount: 'Rs. 3,49,900', status: 'shipped', date: '01 Sep 2026, 5:15 PM' },
-    { id: '#ORD-8865', item: 'Keychron K2', customer: 'A. Smith', amount: 'Rs. 8,500', status: 'delivered', date: '31 Aug 2026, 11:00 AM' },
-  ];
+  React.useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+    try {
+      const api = (await import('../../api/axiosInstance')).default;
+      const res = await api.get('/seller/orders');
+      setOrders(res.data.map(o => ({
+        id: o.id, // This is the orderItem id in the backend, but we treat it as order id for the row
+        realOrderId: o.orderId,
+        item: o.productTitle,
+        customer: o.customer,
+        amount: `Rs. ${o.price}`,
+        status: o.status,
+        date: new Date(o.date).toLocaleString()
+      })));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateStatus = async (id, status) => {
+    try {
+      const api = (await import('../../api/axiosInstance')).default;
+      await api.post(`/seller/orders/${id}/status`, { status });
+      fetchOrders();
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const tabs = [
-    { key: 'pending', label: 'Pending', count: orders.filter(o => o.status === 'placed' || o.status === 'packed').length },
-    { key: 'shipped', label: 'Shipped', count: orders.filter(o => o.status === 'shipped').length },
-    { key: 'delivered', label: 'Delivered', count: orders.filter(o => o.status === 'delivered').length },
+    { key: 'pending', label: 'Pending', count: orders.filter(o => ['PLACED', 'VENDOR_ACCEPTED', 'PACKED'].includes(o.status)).length },
+    { key: 'shipped', label: 'Shipped', count: orders.filter(o => o.status === 'SHIPPED').length },
+    { key: 'delivered', label: 'Delivered', count: orders.filter(o => o.status === 'DELIVERED').length },
   ];
 
   const filtered = orders.filter(o => {
-    if (filter === 'pending') return o.status === 'placed' || o.status === 'packed';
-    return o.status === filter;
+    if (filter === 'pending') return ['PLACED', 'VENDOR_ACCEPTED', 'PACKED'].includes(o.status);
+    if (filter === 'shipped') return o.status === 'SHIPPED';
+    if (filter === 'delivered') return o.status === 'DELIVERED';
+    return true;
   });
 
   return (
@@ -269,8 +416,24 @@ export const OrderManager = () => {
                     onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}>
                     {expandedOrder === order.id ? 'Collapse' : 'Track'}
                   </Button>
-                  {(order.status === 'placed' || order.status === 'packed') && (
-                    <Button size="sm">Mark Shipped</Button>
+                  {order.status === 'PLACED' && (
+                    <Button size="sm" onClick={() => updateStatus(order.id, 'VENDOR_ACCEPTED')}>Accept Order</Button>
+                  )}
+                  {order.status === 'VENDOR_ACCEPTED' && (
+                    <Button size="sm" onClick={() => updateStatus(order.id, 'PACKED')}>Mark Packed</Button>
+                  )}
+                  {order.status === 'PACKED' && (
+                    <Button size="sm" onClick={() => updateStatus(order.id, 'SHIPPED')}>Mark Shipped</Button>
+                  )}
+                  {order.status === 'SHIPPED' && (
+                    <Button size="sm" onClick={() => updateStatus(order.id, 'DELIVERED')}>Mark Delivered</Button>
+                  )}
+                  {['PLACED', 'VENDOR_ACCEPTED', 'PACKED'].includes(order.status) && (
+                    <Button size="sm" variant="danger" onClick={() => {
+                        if (confirm('Are you sure you want to cancel this order? This will release the stock back to inventory.')) {
+                            updateStatus(order.id, 'CANCELLED');
+                        }
+                    }}>Cancel</Button>
                   )}
                 </div>
               </div>
@@ -289,9 +452,29 @@ export const OrderManager = () => {
 };
 
 export const SellerAnalytics = () => {
+  const [stats, setStats] = useState({
+    totalRevenue: 0,
+    activeOrders: 0,
+    completedOrders: 0,
+    totalProducts: 0
+  });
+
+  React.useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const api = (await import('../../api/axiosInstance')).default;
+        const res = await api.get('/seller/analytics/dashboard');
+        setStats(res.data);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    fetchStats();
+  }, []);
+
   const salesData = [
-    { name: 'Mon', sales: 4000 }, { name: 'Tue', sales: 3000 }, { name: 'Wed', sales: 5000 },
-    { name: 'Thu', sales: 4500 }, { name: 'Fri', sales: 6000 }, { name: 'Sat', sales: 7000 }, { name: 'Sun', sales: 5500 },
+    { name: 'Mon', sales: 400 }, { name: 'Tue', sales: 300 }, { name: 'Wed', sales: 500 },
+    { name: 'Thu', sales: 450 }, { name: 'Fri', sales: 600 }, { name: 'Sat', sales: 700 }, { name: 'Sun', sales: 550 },
   ];
   const trafficData = [
     { name: 'Organic', value: 400 }, { name: 'Direct', value: 300 },
@@ -304,10 +487,10 @@ export const SellerAnalytics = () => {
       <PageHeader title="Analytics" subtitle="Your store's performance at a glance." />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <AnimatedStatCard title="Revenue (7d)" value={35000} prefix="₹" trend="+12% vs last week" trendUp={true} icon={<IndianRupee className="w-5 h-5" />} color="primary" />
-        <AnimatedStatCard title="Total Orders" value={128} trend="+8 this week" trendUp={true} icon={<Package className="w-5 h-5" />} color="blue" />
-        <AnimatedStatCard title="Avg. Order Value" value={2730} prefix="₹" trend="−₹200 vs avg" trendUp={false} icon={<IndianRupee className="w-5 h-5" />} color="amber" />
-        <AnimatedStatCard title="Conversion Rate" value={32} suffix="%" trend="+3% this month" trendUp={true} icon={<IndianRupee className="w-5 h-5" />} color="emerald" />
+        <AnimatedStatCard title="Revenue (Lifetime)" value={stats.totalRevenue} prefix="₹" trend="Total Earnings" trendUp={true} icon={<IndianRupee className="w-5 h-5" />} color="primary" />
+        <AnimatedStatCard title="Active Orders" value={stats.activeOrders} trend="Needs fulfillment" trendUp={true} icon={<Package className="w-5 h-5" />} color="blue" />
+        <AnimatedStatCard title="Completed Orders" value={stats.completedOrders} trend="Delivered" trendUp={true} icon={<Package className="w-5 h-5" />} color="emerald" />
+        <AnimatedStatCard title="Total Products" value={stats.totalProducts} trend="In Catalog" trendUp={true} icon={<Package className="w-5 h-5" />} color="amber" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

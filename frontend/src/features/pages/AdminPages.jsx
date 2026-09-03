@@ -199,13 +199,44 @@ export const PlatformAnalytics = () => (
 );
 
 export const VendorApproval = () => {
-  const [vendors, setVendors] = useState([
-    { id: 1, name: 'New Store 1 LLC', email: 'contact@store1.com', category: 'Electronics', date: '02 Sep', location: 'Mumbai', type: 'Sole Proprietor' },
-    { id: 2, name: 'ElectroWorld', email: 'sales@electroworld.com', category: 'Electronics', date: '01 Sep', location: 'Delhi', type: 'Pvt. Ltd.' },
-    { id: 3, name: 'StyleHub PVT', email: 'hello@stylehub.in', category: 'Fashion', date: '31 Aug', location: 'Bangalore', type: 'Pvt. Ltd.' },
-  ]);
+  const [vendors, setVendors] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleAction = (id) => setVendors(prev => prev.filter(v => v.id !== id));
+  React.useEffect(() => {
+    fetchPending();
+  }, []);
+
+  const fetchPending = async () => {
+    try {
+      const api = (await import('../../api/axiosInstance')).default;
+      const res = await api.get('/admin/vendors/pending');
+      setVendors(res.data.map(v => ({
+        id: v.id,
+        name: v.storeName,
+        email: v.user?.email || 'Unknown',
+        category: v.businessDetails || 'General',
+        date: new Date().toLocaleDateString(),
+        location: 'Not Provided',
+        type: v.bankAccountRef || 'N/A'
+      })));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAction = async (id, action) => {
+    try {
+      const api = (await import('../../api/axiosInstance')).default;
+      const status = action === 'approve' ? 'APPROVED' : 'REJECTED';
+      await api.post(`/admin/vendors/${id}/status`, { status });
+      setVendors(prev => prev.filter(v => v.id !== id));
+    } catch (e) {
+      console.error(e);
+      alert(e.response?.data || 'Action failed');
+    }
+  };
 
   return (
     <div className="space-y-8 font-sans">
@@ -235,7 +266,7 @@ export const VendorApproval = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {vendors.map(v => (
-            <VendorCard key={v.id} vendor={v} onApprove={handleAction} onReject={handleAction} />
+            <VendorCard key={v.id} vendor={v} onApprove={(id) => handleAction(id, 'approve')} onReject={(id) => handleAction(id, 'reject')} />
           ))}
         </div>
       )}

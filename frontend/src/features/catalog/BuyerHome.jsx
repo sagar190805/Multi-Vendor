@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ProductCard } from '../../components/ui/ProductCard';
-import { getProducts } from '../../data/mockProducts';
+import axios from 'axios';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -25,9 +25,17 @@ export function BuyerHome() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getProducts()
-      .then(data => {
-        setTrendingProducts(data.slice(0, 25));
+    axios.get('http://localhost:8080/api/products')
+      .then(res => {
+        // Map backend DTO to frontend expected format
+        const formattedProducts = res.data.map(p => ({
+          id: p.id,
+          title: p.title,
+          price: p.price,
+          category: p.category,
+          image: p.imageUrl || 'https://via.placeholder.com/300'
+        }));
+        setTrendingProducts(formattedProducts.slice(0, 25));
         setLoading(false);
       })
       .catch(err => {

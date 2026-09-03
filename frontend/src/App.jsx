@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './features/auth/AuthContext';
 import { Login } from './features/auth/Login';
+import { SellerLogin } from './features/auth/SellerLogin';
 import { Register } from './features/auth/Register';
 import { BuyerLayout } from './layouts/BuyerLayout';
 import { SellerLayout } from './layouts/SellerLayout';
@@ -65,6 +66,7 @@ function App() {
 
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/seller/login" element={<SellerLogin />} />
           <Route path="/seller/onboarding" element={<ProtectedRoute><SellerOnboarding /></ProtectedRoute>} />
 
           <Route path="/seller" element={<ProtectedRoute allowedRole="CUSTOMER"><SellerLayout /></ProtectedRoute>}>

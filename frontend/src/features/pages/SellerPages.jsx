@@ -31,6 +31,7 @@ export const SellerOnboarding = () => {
         setRejectionReason(res.data.rejectionReason);
       } catch (err) {
         console.error(err);
+        setStatus('ERROR');
       }
     };
     fetchStatus();
@@ -50,6 +51,7 @@ export const SellerOnboarding = () => {
   };
 
   if (status === 'LOADING') return <div className="p-24 text-center">Loading...</div>;
+  if (status === 'ERROR') return <div className="p-24 text-center text-red-500 font-bold">Failed to load onboarding status. Please try signing out and signing back in.</div>;
   if (status === 'PENDING') return <div className="p-24 text-center"><h1 className="text-3xl font-bold">Application Pending</h1><p>The admin team is reviewing your application.</p></div>;
   if (status === 'APPROVED') return <div className="p-24 text-center"><h1 className="text-3xl font-bold text-emerald-500">Approved!</h1><p>You can now access your dashboard.</p><Button onClick={() => window.location.href='/seller/dashboard'} className="mt-4">Go to Dashboard</Button></div>;
   if (status === 'REJECTED') {

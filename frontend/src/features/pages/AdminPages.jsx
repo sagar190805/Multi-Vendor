@@ -211,6 +211,7 @@ export const PlatformAnalytics = () => {
         </div>
       </Card>
     </div>
+    </div>
   );
 };
 

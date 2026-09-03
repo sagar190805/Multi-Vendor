@@ -26,7 +26,7 @@ import { PlatformSplash } from './features/pages/PlatformSplash';
 function ProtectedRoute({ children, allowedRole }) {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" />;
-  if (allowedRole && user.role !== allowedRole) return <Navigate to="/" />;
+  if (allowedRole && !user.role?.includes(allowedRole)) return <Navigate to="/" />;
   return children;
 }
 

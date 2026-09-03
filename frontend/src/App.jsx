@@ -21,6 +21,7 @@ import {
   VendorApproval, CatalogModeration, PromotionsCMS,
   OrderOversight, PlatformAnalytics, CommissionConfig
 } from './features/pages/AdminPages';
+
 import { PlatformSplash } from './features/pages/PlatformSplash';
 
 function ProtectedRoute({ children, allowedRole }) {

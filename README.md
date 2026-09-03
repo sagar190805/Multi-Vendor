@@ -1,72 +1,63 @@
-# Multi-Vendor E-Commerce Platform
+# Multi-Vendor Marketplace Platform
 
-A comprehensive, full-stack multi-vendor marketplace platform featuring dedicated portals for Buyers, Sellers, and Administrators. The system allows multiple independent vendors to set up storefronts, manage products, and fulfill orders while platform administrators oversee approvals, disputes, and commission rates.
+A full-stack, three-portal marketplace application built with Spring Boot, React, and PostgreSQL. The platform facilitates end-to-end commerce with distinct interfaces and workflows for Buyers, Sellers, and Administrators.
 
-## Platform Features
+## 🏗 Architecture & Tech Stack
 
-### Buyer Portal
-* Product Discovery: Browse and search for products across multiple vendors.
-* Shopping Cart & Checkout: Seamless purchasing experience.
-* Order Tracking: Monitor order status from placement to delivery.
+- **Backend**: Java 17, Spring Boot 3.3.2, Spring Security (JWT), Spring Data JPA, Hibernate.
+- **Frontend**: React 18, Vite, Zustand (State Management), Tailwind CSS (Styling), React Router v6.
+- **Database**: PostgreSQL 16, Flyway (Schema Migration).
+- **Integrations**: Razorpay (Payment Gateway webhook & client SDK).
 
-### Seller Dashboard
-* Store Onboarding: Simple 3-step store setup process.
-* Product Management: Add, edit, and track inventory with a visual grid/list toggle.
-* Bulk Upload: Drag-and-drop CSV upload for large product catalogs.
-* Order Management: Track orders with a detailed visual timeline (Placed, Packed, Shipped, Delivered).
-* Sales Analytics: Real-time revenue charts and traffic source breakdowns using Recharts.
-* Payout Ledger: Track earnings, platform fees, and withdrawal history.
+### Core Portals
 
-### Admin Console
-* Platform Analytics: Macro-level view of GMV, active users, and platform health metrics.
-* Vendor Approval: Review and process new seller KYC applications.
-* Catalog Moderation: Monitor and take down flagged or suspicious products.
-* Dispute Center: Resolve escalated order issues between buyers and sellers.
-* Commission Configuration: Set dynamic platform fee percentages based on product categories.
-* Audit Log: Detailed, timestamped activity feed of system events.
+1. **Buyer Portal (`/`, `/category/*`, `/checkout`, `/profile`)**
+   - Catalog browsing and full-text search.
+   - Shopping cart with session persistence and secure checkout.
+   - Real-time Razorpay payment integration with HMAC-verified webhooks protecting order state transitions.
 
-## Tech Stack
+2. **Seller Center (`/seller/*`)**
+   - KYC/Onboarding pipeline (Pending → Approved/Rejected loop).
+   - Storefront and inventory management (CRUD with stock tracking).
+   - Order fulfillment state machine (`PLACED` → `VENDOR_ACCEPTED` → `PACKED` → `SHIPPED` → `DELIVERED`).
 
-### Frontend
-* React 18
-* Vite
-* Tailwind CSS v4
-* React Router v6
-* Recharts (Data visualization)
-* Lucide React (Icons)
-* Framer Motion (Animations)
+3. **Admin Console (`/admin/*`)**
+   - Strict Route & Role Guarding (`hasRole('ADMIN')`).
+   - Vendor Application Moderation (Approve/Reject with feedback).
+   - Catalog Moderation (Global visibility and Ban/Unban capabilities).
+   - Platform Analytics & Order Oversight (Read-only cross-platform monitoring).
 
-### Backend
-* Java 17
-* Spring Boot 3
-* Spring Security (JWT Authentication)
-* PostgreSQL
-* Flyway (Database Migrations)
-* Gradle
+## 🔒 Key Engineering Highlights
 
-## Getting Started
+### 1. Robust State Machines
+Order lifecycles follow a strict state machine enforced at the controller level. Edge cases are handled defensively:
+- **Abandoned/Failed Payments**: Razorpay webhooks detect `payment.failed` events, immediately flipping the order to `CANCELLED` and releasing the soft-reserved inventory back into the active stock pool.
+- **Cancellations**: Vendors can cancel orders pre-shipment, triggering automatic stock restoration.
 
-### Prerequisites
-* Node.js (v18 or higher)
-* Java 17+
-* PostgreSQL
+### 2. Concurrency & Integrity
+- **Optimistic Locking**: Product entities utilize `@Version` to prevent race conditions during high-concurrency checkouts, ensuring stock levels cannot drop below zero.
+- **Price Snapshots**: Order items capture the `priceAtTime` of checkout. Post-purchase price modifications by a vendor will never retroactively alter historical order records or financial analytics.
 
-### Frontend Setup
-1. Navigate to the frontend directory:
-   cd frontend
-2. Install dependencies:
-   npm install
-3. Start the development server:
-   npm run dev
+### 3. Security First
+- **IDOR Protection**: Seller endpoints strictly validate that the authenticated JWT corresponds to the `vendorId` of the requested resource. Sellers cannot mutate (or even view) orders or products belonging to competitors.
+- **Webhook Source of Truth**: The frontend payment callback (`/verify`) acts only as a fast UI transition. The actual database state and financial confirmation rely exclusively on the `X-Razorpay-Signature` HMAC-validated webhook from Razorpay's backend.
 
-### Backend Setup
-1. Navigate to the backend directory:
-   cd backend
-2. Configure your database credentials in src/main/resources/application.yml
-3. Run the application:
-   ./gradlew bootRun
+## 🚀 Running Locally
 
-## Architecture
-The project is structured into two main directories:
-* /frontend: Contains the React application with separated layouts and features for Admin, Seller, and Buyer views.
-* /backend: Contains the Spring Boot REST API for authentication, user management, and business logic.
+1. **Database**
+   - Ensure PostgreSQL is running on `localhost:5432`.
+   - Create a database named `marketplace` (`CREATE DATABASE marketplace;`).
+   - Default credentials used: `postgres` / `password`.
+
+2. **Backend**
+   - Add your Razorpay test keys to `application.properties`:
+     - `razorpay.key.id`
+     - `razorpay.key.secret`
+     - `razorpay.webhook.secret`
+   - Run `.\gradlew.bat bootRun` (Windows) or `./gradlew bootRun` (Mac/Linux).
+   - Flyway will automatically run all migrations up to `V9`.
+
+3. **Frontend**
+   - Navigate to `frontend/`.
+   - Run `npm install` followed by `npm run dev`.
+   - The application will be available at `http://localhost:5173`.

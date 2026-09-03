@@ -42,4 +42,7 @@ public class Product {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(nullable = false)
+    private String status = "ACTIVE";
 }

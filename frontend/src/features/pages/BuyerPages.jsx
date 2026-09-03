@@ -353,8 +353,6 @@ export const CheckoutPage = () => {
     );
   }
 
-  const [simulateFailure, setSimulateFailure] = useState(false);
-
   const handlePlaceOrder = async () => {
     try {
       setLoading(true);
@@ -363,19 +361,50 @@ export const CheckoutPage = () => {
         shippingAddress: address,
         items: items.map(i => ({ productId: i.id, quantity: i.quantity }))
       };
-      // Step 1: Create Order & Reserve Stock
+      
       const checkoutRes = await api.post('/customer/orders/checkout', orderData);
       const orderId = checkoutRes.data.orderId;
 
-      // Step 2: Attempt Payment
-      try {
-        await api.post(`/customer/orders/${orderId}/pay`, { success: !simulateFailure });
-        clearCart();
-        setStep(4);
-      } catch (paymentError) {
-        alert("Payment failed! Your order was cancelled and the stock has been released.");
-        // We stay on the payment step or could redirect to cart.
-      }
+      const paymentRes = await api.post('/payments/create-order', { orderId });
+      const { razorpayOrderId, amount, currency, keyId } = paymentRes.data;
+
+      const options = {
+        key: keyId,
+        amount: amount,
+        currency: currency,
+        name: "Multi-Vendor Marketplace",
+        description: `Order #${orderId}`,
+        order_id: razorpayOrderId,
+        handler: async (response) => {
+          try {
+            await api.post('/payments/verify', {
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature
+            });
+            clearCart();
+            setStep(4);
+          } catch (err) {
+            console.error(err);
+            alert("Payment verification failed! It may take a moment for the webhook to update your order.");
+            setStep(4);
+          }
+        },
+        prefill: {
+          name: "Test Customer",
+          email: "customer@example.com"
+        },
+        theme: {
+          color: "#E05D36"
+        }
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", async (response) => {
+        alert("Payment Failed: " + response.error.description);
+      });
+      rzp.open();
+      
     } catch (e) {
       console.error(e);
       alert(e.response?.data || 'Error creating order.');
@@ -383,7 +412,6 @@ export const CheckoutPage = () => {
       setLoading(false);
     }
   };
-
 
   if (step === 4) {
     return (
@@ -487,11 +515,6 @@ export const CheckoutPage = () => {
                 <label className={`flex items-center gap-4 p-4 rounded-2xl border-2 cursor-pointer transition-all ${paymentMethod === 'upi' ? 'border-primary bg-primary/5' : 'border-transparent bg-black/5 dark:bg-white/5'}`}>
                   <input type="radio" checked={paymentMethod === 'upi'} onChange={() => setPaymentMethod('upi')} className="w-5 h-5 accent-primary" />
                   <span className="font-bold">UPI / NetBanking (Mock)</span>
-                </label>
-                
-                <label className="flex items-center gap-4 p-4 rounded-2xl border-2 border-red-500/20 bg-red-500/5 cursor-pointer">
-                  <input type="checkbox" checked={simulateFailure} onChange={(e) => setSimulateFailure(e.target.checked)} className="w-5 h-5 accent-red-500" />
-                  <span className="font-bold text-red-500">Test: Simulate Payment Failure</span>
                 </label>
               </div>
               <div className="flex gap-4">

@@ -44,6 +44,7 @@ public class PublicProductController {
         }
         
         return products.stream()
+                .filter(p -> "ACTIVE".equals(p.getStatus()))
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }

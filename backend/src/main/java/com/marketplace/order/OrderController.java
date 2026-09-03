@@ -70,32 +70,7 @@ public class OrderController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/{orderId}/pay")
-    public ResponseEntity<?> payOrder(@PathVariable java.util.UUID orderId, @RequestBody java.util.Map<String, Boolean> payload) {
-        Order order = orderRepository.findById(orderId).orElseThrow();
-        if (!"PAYMENT_PENDING".equals(order.getStatus())) {
-            return ResponseEntity.badRequest().body("Order is not pending payment.");
-        }
 
-        boolean success = payload.getOrDefault("success", true);
-        if (success) {
-            order.setStatus("PAID");
-            orderRepository.save(order);
-            return ResponseEntity.ok("Payment successful, order confirmed.");
-        } else {
-            order.setStatus("CANCELLED");
-            
-            // Release the reserved stock back to the products
-            for (OrderItem item : order.getItems()) {
-                Product product = item.getProduct();
-                product.setStock(product.getStock() + item.getQuantity());
-                productRepository.save(product);
-            }
-            orderRepository.save(order);
-            
-            return ResponseEntity.badRequest().body("Payment failed, order cancelled and stock released.");
-        }
-    }
 
     @GetMapping
     public ResponseEntity<?> getMyOrders() {

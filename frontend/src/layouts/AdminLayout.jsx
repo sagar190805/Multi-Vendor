@@ -12,7 +12,7 @@ export function AdminLayout() {
     { name: 'Vendors', path: '/admin/vendors', icon: <ShieldAlert className="w-4 h-4 mr-2" /> },
     { name: 'Catalog', path: '/admin/catalog', icon: <ListChecks className="w-4 h-4 mr-2" /> },
     { name: 'Promotions', path: '/admin/promotions', icon: <Tags className="w-4 h-4 mr-2" /> },
-    { name: 'Disputes', path: '/admin/disputes', icon: <AlertCircle className="w-4 h-4 mr-2" /> },
+    { name: 'Orders', path: '/admin/orders', icon: <AlertCircle className="w-4 h-4 mr-2" /> },
     { name: 'Commissions', path: '/admin/commissions', icon: <Percent className="w-4 h-4 mr-2" /> },
   ];
 

@@ -20,6 +20,7 @@ export const SellerOnboarding = () => {
   const [businessDetails, setBusinessDetails] = useState('');
   const [bankDetails, setBankDetails] = useState('');
   const [status, setStatus] = useState('LOADING');
+  const [rejectionReason, setRejectionReason] = useState(null);
 
   React.useEffect(() => {
     const fetchStatus = async () => {
@@ -27,6 +28,7 @@ export const SellerOnboarding = () => {
         const api = (await import('../../api/axiosInstance')).default;
         const res = await api.get('/seller/onboarding');
         setStatus(res.data.kycStatus);
+        setRejectionReason(res.data.rejectionReason);
       } catch (err) {
         console.error(err);
       }
@@ -50,7 +52,20 @@ export const SellerOnboarding = () => {
   if (status === 'LOADING') return <div className="p-24 text-center">Loading...</div>;
   if (status === 'PENDING') return <div className="p-24 text-center"><h1 className="text-3xl font-bold">Application Pending</h1><p>The admin team is reviewing your application.</p></div>;
   if (status === 'APPROVED') return <div className="p-24 text-center"><h1 className="text-3xl font-bold text-emerald-500">Approved!</h1><p>You can now access your dashboard.</p><Button onClick={() => window.location.href='/seller/dashboard'} className="mt-4">Go to Dashboard</Button></div>;
-  if (status === 'REJECTED') return <div className="p-24 text-center"><h1 className="text-3xl font-bold text-red-500">Application Rejected</h1><p>Please contact support.</p></div>;
+  if (status === 'REJECTED') {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 font-sans">
+        <div className="w-full max-w-2xl bg-white/50 dark:bg-white/5 border border-red-500/20 rounded-[32px] p-12 shadow-2xl backdrop-blur-xl text-center">
+          <h1 className="text-3xl font-bold text-red-500 mb-4">Application Rejected</h1>
+          <div className="bg-red-500/10 text-red-700 dark:text-red-400 p-4 rounded-xl mb-8">
+            <p className="font-bold">Reason for Rejection:</p>
+            <p>{rejectionReason || 'No specific reason provided. Please contact support.'}</p>
+          </div>
+          <Button onClick={() => setStatus('NOT_STARTED')} size="lg" className="w-full">Update Details and Re-Submit</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 font-sans">
@@ -115,6 +130,7 @@ export const ProductManager = () => {
         stock: p.stock,
         category: p.category,
         description: p.description,
+        status: p.status || 'ACTIVE',
         sku: `SKU-${p.id.substring(0,6)}`,
         image: p.imageUrl || 'https://via.placeholder.com/300'
       })));
@@ -255,9 +271,13 @@ export const ProductManager = () => {
                     )}
                   </Td>
                   <Td>
-                    <Badge variant={p.stock > 10 ? 'success' : p.stock > 0 ? 'warning' : 'danger'}>
-                      {p.stock > 10 ? 'In Stock' : p.stock > 0 ? 'Low Stock' : 'Out of Stock'}
-                    </Badge>
+                    {p.status === 'BANNED' ? (
+                      <Badge variant="danger">BANNED</Badge>
+                    ) : (
+                      <Badge variant={p.stock > 10 ? 'success' : p.stock > 0 ? 'warning' : 'danger'}>
+                        {p.stock > 10 ? 'In Stock' : p.stock > 0 ? 'Low Stock' : 'Out of Stock'}
+                      </Badge>
+                    )}
                   </Td>
                   <Td>
                     <div className="flex gap-2">

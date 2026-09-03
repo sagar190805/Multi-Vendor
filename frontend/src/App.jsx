@@ -19,7 +19,7 @@ import {
 } from './features/pages/SellerPages';
 import {
   VendorApproval, CatalogModeration, PromotionsCMS,
-  DisputeCenter, PlatformAnalytics, CommissionConfig
+  OrderOversight, PlatformAnalytics, CommissionConfig
 } from './features/pages/AdminPages';
 import { PlatformSplash } from './features/pages/PlatformSplash';
 
@@ -74,7 +74,7 @@ function App() {
             <Route path="vendors" element={<VendorApproval />} />
             <Route path="catalog" element={<CatalogModeration />} />
             <Route path="promotions" element={<PromotionsCMS />} />
-            <Route path="disputes" element={<DisputeCenter />} />
+            <Route path="orders" element={<OrderOversight />} />
             <Route path="analytics" element={<PlatformAnalytics />} />
             <Route path="commissions" element={<CommissionConfig />} />
           </Route>

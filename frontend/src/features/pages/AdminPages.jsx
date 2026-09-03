@@ -228,9 +228,15 @@ export const VendorApproval = () => {
 
   const handleAction = async (id, action) => {
     try {
+      let reason = null;
+      if (action === 'reject') {
+        reason = prompt("Please provide a reason for rejecting this application (the seller will see this):");
+        if (reason === null) return;
+      }
+      
       const api = (await import('../../api/axiosInstance')).default;
       const status = action === 'approve' ? 'APPROVED' : 'REJECTED';
-      await api.post(`/admin/vendors/${id}/status`, { status });
+      await api.post(`/admin/vendors/${id}/status`, { status, reason });
       setVendors(prev => prev.filter(v => v.id !== id));
     } catch (e) {
       console.error(e);
@@ -270,82 +276,62 @@ export const VendorApproval = () => {
           ))}
         </div>
       )}
-
-      <Card className="p-0 overflow-hidden">
-        <div className="p-6 border-b border-black/5 dark:border-white/10">
-          <h3 className="font-bold text-xl">Recently Processed</h3>
-        </div>
-        <Table>
-          <Thead>
-            <Tr>
-              <Th>Vendor</Th>
-              <Th>Category</Th>
-              <Th>Decision</Th>
-              <Th>By</Th>
-              <Th>Date</Th>
-            </Tr>
-          </Thead>
-          <Tbody>
-            {[
-              { name: 'TechHub Store', category: 'Electronics', decision: 'Approved', by: 'Admin', date: '01 Sep' },
-              { name: 'FakeBrands LLC', category: 'Fashion', decision: 'Rejected', by: 'Admin', date: '31 Aug' },
-              { name: 'HomeDecor Plus', category: 'Home', decision: 'Approved', by: 'Admin', date: '30 Aug' },
-            ].map((row, i) => (
-              <Tr key={i}>
-                <Td className="font-bold">{row.name}</Td>
-                <Td className="text-muted-foreground font-medium">{row.category}</Td>
-                <Td>
-                  <div className="flex items-center gap-2">
-                    {row.decision === 'Approved' ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <XCircle className="w-4 h-4 text-red-500" />}
-                    <Badge variant={row.decision === 'Approved' ? 'success' : 'danger'}>{row.decision}</Badge>
-                  </div>
-                </Td>
-                <Td className="text-muted-foreground font-medium">{row.by}</Td>
-                <Td className="text-muted-foreground text-sm">{row.date}</Td>
-              </Tr>
-            ))}
-          </Tbody>
-        </Table>
-      </Card>
     </div>
   );
 };
 
 export const CatalogModeration = () => {
-  const [items, setItems] = useState([
-    { id: 1, name: 'Suspicious Rolex', vendor: 'WatchWorld', reason: 'Counterfeit claim', date: '02 Sep', reports: 5 },
-    { id: 2, name: 'Unbranded Charger', vendor: 'TechStore', reason: 'Safety violation', date: '01 Sep', reports: 3 },
-    { id: 3, name: 'Stolen Software Key', vendor: 'DigitalGoods', reason: 'Copyright infringement', date: '31 Aug', reports: 8 },
-  ]);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleAction = (id) => setItems(prev => prev.filter(item => item.id !== id));
+  React.useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const api = (await import('../../api/axiosInstance')).default;
+      const res = await api.get('/admin/products');
+      setItems(res.data.filter(p => p.status !== 'BANNED'));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBan = async (id) => {
+    try {
+      const api = (await import('../../api/axiosInstance')).default;
+      await api.post(`/admin/products/${id}/status`, { status: 'BANNED' });
+      setItems(prev => prev.filter(item => item.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert('Failed to ban product');
+    }
+  };
 
   return (
     <div className="space-y-8 font-sans">
-      <PageHeader title="Catalog Moderation" subtitle={`${items.length} items awaiting review.`} />
-      {items.length === 0 ? (
-        <EmptyState icon={<ListChecks className="w-8 h-8" />} title="Queue is clear!" description="All reported products have been reviewed." />
+      <PageHeader title="Catalog Moderation" subtitle={`${items.length} active products available for review.`} />
+      {loading ? (
+        <div className="p-12 text-center">Loading catalog...</div>
+      ) : items.length === 0 ? (
+        <EmptyState icon={<ListChecks className="w-8 h-8" />} title="Catalog is empty!" description="No active products to review." />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {items.map(item => (
             <Card key={item.id} className="p-6 relative hover:shadow-lg transition-all">
-              <div className="absolute top-5 right-5 flex flex-col gap-2 items-end">
-                <Badge variant="danger">Reported</Badge>
-                <span className="text-xs font-bold text-red-500">{item.reports} reports</span>
+              <div className="aspect-video bg-white dark:bg-white/5 rounded-2xl mb-5 flex items-center justify-center p-2 border border-black/5 dark:border-white/10">
+                <img src={item.imageUrl || 'https://via.placeholder.com/300'} alt={item.title} className="w-full h-full object-contain mix-blend-multiply" />
               </div>
-              <div className="aspect-video bg-black/5 dark:bg-white/5 rounded-2xl mb-5 flex items-center justify-center">
-                <Package className="w-10 h-10 text-muted-foreground opacity-30" />
-              </div>
-              <p className="text-xs font-bold text-muted-foreground mb-1">{item.vendor} · {item.date}</p>
-              <h4 className="font-bold text-lg mb-1">{item.name}</h4>
-              <p className="text-sm text-red-500 dark:text-red-400 font-medium mb-5">{item.reason}</p>
-              <div className="mb-5">
-                <ProgressBar label="Severity" value={item.reports * 10} max={100} color="danger" size="sm" />
-              </div>
-              <div className="flex gap-2">
-                <Button variant="danger" className="flex-1" onClick={() => handleAction(item.id)}>Take Down</Button>
-                <Button variant="secondary" className="flex-1" onClick={() => handleAction(item.id)}>Ignore</Button>
-              </div>
+              <p className="text-xs font-bold text-muted-foreground mb-1">{item.vendor?.storeName || 'Unknown Vendor'}</p>
+              <h4 className="font-bold text-lg mb-1 line-clamp-1">{item.title}</h4>
+              <p className="text-sm text-emerald-600 dark:text-emerald-400 font-bold mb-5">₹{item.price?.toLocaleString('en-IN')}</p>
+              <Button variant="danger" className="w-full" onClick={() => {
+                if (confirm('Are you sure you want to ban this product? It will be hidden from buyers.')) handleBan(item.id);
+              }}>Ban & Take Down</Button>
             </Card>
           ))}
         </div>
@@ -401,69 +387,64 @@ export const PromotionsCMS = () => (
   </div>
 );
 
-export const DisputeCenter = () => {
-  const [disputes, setDisputes] = useState([
-    { id: '#8892', title: 'Item never arrived', buyer: 'J. Smith', seller: 'TechStore', amount: 'Rs. 29,990', status: 'Escalated', days: 5 },
-    { id: '#8879', title: 'Wrong item received', buyer: 'A. Kumar', seller: 'FashionVault', amount: 'Rs. 3,499', status: 'Open', days: 2 },
-    { id: '#8865', title: 'Damaged packaging', buyer: 'S. Patel', seller: 'HomeStyle', amount: 'Rs. 5,600', status: 'Open', days: 1 },
-  ]);
+export const OrderOversight = () => {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const resolve = (id) => setDisputes(prev => prev.filter(d => d.id !== id));
+  React.useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+    try {
+      const api = (await import('../../api/axiosInstance')).default;
+      const res = await api.get('/admin/orders');
+      setOrders(res.data.map(o => ({
+        id: o.id,
+        buyer: o.buyer?.email || 'Unknown',
+        amount: o.totalAmount,
+        status: o.status,
+        date: new Date(o.createdAt).toLocaleDateString()
+      })));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-8 font-sans">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-black tracking-tight mb-2">Dispute Center</h1>
-          <p className="text-muted-foreground font-medium text-lg">{disputes.length} active disputes.</p>
-        </div>
-        <div className="flex gap-2">
-          <div className="p-3 bg-red-500/10 rounded-2xl text-center px-5">
-            <p className="font-black text-2xl text-red-600 dark:text-red-400">{disputes.filter(d => d.status === 'Escalated').length}</p>
-            <p className="text-xs font-bold text-muted-foreground">Escalated</p>
-          </div>
-          <div className="p-3 bg-amber-500/10 rounded-2xl text-center px-5">
-            <p className="font-black text-2xl text-amber-600 dark:text-amber-400">{disputes.filter(d => d.status === 'Open').length}</p>
-            <p className="text-xs font-bold text-muted-foreground">Open</p>
-          </div>
-          <div className="p-3 bg-emerald-500/10 rounded-2xl text-center px-5">
-            <p className="font-black text-2xl text-emerald-600 dark:text-emerald-400">41</p>
-            <p className="text-xs font-bold text-muted-foreground">Resolved</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        {disputes.map((d, i) => (
-          <Card key={i} className={`p-6 border-l-4 ${d.status === 'Escalated' ? 'border-l-red-500' : 'border-l-amber-500'}`}>
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-              <div className="flex items-start gap-4">
-                <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${d.status === 'Escalated' ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-500'}`}>
-                  <AlertCircle className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-3 mb-1 flex-wrap">
-                    <span className="font-black text-base">Order {d.id}</span>
-                    <Badge variant={d.status === 'Escalated' ? 'danger' : 'warning'}>{d.status}</Badge>
-                    <span className="text-xs font-bold text-muted-foreground">Open {d.days}d</span>
-                  </div>
-                  <p className="font-bold text-muted-foreground mb-1">{d.title}</p>
-                  <p className="text-sm text-muted-foreground">Buyer: {d.buyer} · Seller: {d.seller} · <span className="font-bold text-foreground">{d.amount}</span></p>
-                </div>
-              </div>
-              <div className="flex flex-col gap-2 sm:items-end shrink-0">
-                <div className="flex gap-2">
-                  <Button size="sm">Review Evidence</Button>
-                  <Button variant="secondary" size="sm" onClick={() => resolve(d.id)}>Refund Buyer</Button>
-                </div>
-                <button onClick={() => resolve(d.id)} className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:opacity-80 text-right">
-                  Mark as Resolved →
-                </button>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
+      <PageHeader title="Order Oversight" subtitle={`${orders.length} total orders across the platform.`} />
+      
+      <Card className="p-0 overflow-hidden">
+        <Table>
+          <Thead>
+            <Tr>
+              <Th>Order ID</Th>
+              <Th>Buyer</Th>
+              <Th>Amount</Th>
+              <Th>Date</Th>
+              <Th>Status</Th>
+            </Tr>
+          </Thead>
+          <Tbody>
+            {loading ? (
+              <Tr><Td colSpan="5" className="text-center p-8">Loading...</Td></Tr>
+            ) : orders.length === 0 ? (
+              <Tr><Td colSpan="5" className="text-center p-8">No orders found.</Td></Tr>
+            ) : orders.map((o, i) => (
+              <Tr key={i}>
+                <Td className="font-bold">{o.id.substring(0,8)}...</Td>
+                <Td className="text-muted-foreground font-medium">{o.buyer}</Td>
+                <Td className="font-bold">₹{o.amount.toLocaleString('en-IN')}</Td>
+                <Td className="text-sm text-muted-foreground">{o.date}</Td>
+                <Td><Badge variant={['DELIVERED', 'PAID'].includes(o.status) ? 'success' : o.status === 'CANCELLED' ? 'danger' : 'warning'}>{o.status}</Badge></Td>
+              </Tr>
+            ))}
+          </Tbody>
+        </Table>
+      </Card>
     </div>
   );
 };

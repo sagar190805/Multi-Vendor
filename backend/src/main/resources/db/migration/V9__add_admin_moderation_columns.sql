@@ -1,0 +1,2 @@
+ALTER TABLE vendors ADD COLUMN rejection_reason TEXT;
+ALTER TABLE products ADD COLUMN status VARCHAR(50) DEFAULT 'ACTIVE';

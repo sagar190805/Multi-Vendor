@@ -13,6 +13,8 @@ import java.util.stream.Collectors;
 public class AdminController {
 
     private final VendorRepository vendorRepository;
+    private final com.marketplace.order.OrderRepository orderRepository;
+    private final com.marketplace.product.ProductRepository productRepository;
 
     @GetMapping("/vendors/pending")
     public ResponseEntity<List<Vendor>> getPendingVendors() {
@@ -33,6 +35,7 @@ public class AdminController {
         Vendor vendor = vendorRepository.findById(id).orElseThrow();
         String currentStatus = vendor.getKycStatus();
         String newStatus = body.get("status");
+        String reason = body.get("reason");
 
         boolean validTransition = false;
         
@@ -45,7 +48,32 @@ public class AdminController {
         }
 
         vendor.setKycStatus(newStatus);
+        if ("REJECTED".equals(newStatus)) {
+            vendor.setRejectionReason(reason);
+        } else {
+            vendor.setRejectionReason(null);
+        }
+        
         vendorRepository.save(vendor);
         return ResponseEntity.ok("Vendor status updated to " + newStatus);
+    }
+
+    @GetMapping("/orders")
+    public ResponseEntity<List<com.marketplace.order.Order>> getAllOrders() {
+        return ResponseEntity.ok(orderRepository.findAll());
+    }
+
+    @GetMapping("/products")
+    public ResponseEntity<List<com.marketplace.product.Product>> getAllProducts() {
+        return ResponseEntity.ok(productRepository.findAll());
+    }
+
+    @PostMapping("/products/{id}/status")
+    public ResponseEntity<?> updateProductStatus(@PathVariable UUID id, @RequestBody java.util.Map<String, String> body) {
+        com.marketplace.product.Product product = productRepository.findById(id).orElseThrow();
+        String newStatus = body.get("status");
+        product.setStatus(newStatus);
+        productRepository.save(product);
+        return ResponseEntity.ok("Product status updated to " + newStatus);
     }
 }

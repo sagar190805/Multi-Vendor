@@ -42,4 +42,7 @@ public class Vendor {
     
     @Column(name = "business_details", columnDefinition = "TEXT")
     private String businessDetails;
+
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    private String rejectionReason;
 }

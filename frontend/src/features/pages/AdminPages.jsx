@@ -38,16 +38,32 @@ const auditEntries = [
   { actor: 'super@admin.com', action: 'login', detail: 'Admin login from 192.168.1.1 (Mumbai)', time: 'Yesterday', type: 'login' },
 ];
 
-export const PlatformAnalytics = () => (
-  <div className="space-y-8 font-sans">
-    <PageHeader title="Platform Analytics" subtitle="Real-time overview of the marketplace." />
+export const PlatformAnalytics = () => {
+  const [stats, setStats] = useState(null);
 
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <AnimatedStatCard title="GMV (30d)" value={1200000} prefix="₹" trend="+18% vs last month" trendUp={true} icon={<IndianRupee className="w-5 h-5" />} color="primary" />
-      <AnimatedStatCard title="Active Buyers" value={45200} trend="+2.3k this week" trendUp={true} icon={<Users className="w-5 h-5" />} color="blue" />
-      <AnimatedStatCard title="Active Sellers" value={892} trend="8 pending review" trendUp={true} icon={<Package className="w-5 h-5" />} color="emerald" />
-      <AnimatedStatCard title="Platform Fee Rev" value={60000} prefix="₹" trend="+12% growth" trendUp={true} icon={<TrendingUp className="w-5 h-5" />} color="purple" />
-    </div>
+  React.useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const api = (await import('../../api/axiosInstance')).default;
+        const res = await api.get('/admin/analytics/overview');
+        setStats(res.data);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    fetchStats();
+  }, []);
+
+  return (
+    <div className="space-y-8 font-sans">
+      <PageHeader title="Platform Analytics" subtitle="Real-time overview of the marketplace." />
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <AnimatedStatCard title="Total GMV" value={stats?.totalGmv || 0} prefix="₹" trend="Lifetime sales" trendUp={true} icon={<IndianRupee className="w-5 h-5" />} color="primary" />
+        <AnimatedStatCard title="Total Orders" value={stats?.totalOrders || 0} trend="All time" trendUp={true} icon={<Package className="w-5 h-5" />} color="blue" />
+        <AnimatedStatCard title="Active Sellers" value={stats?.activeVendors || 0} trend={`${stats?.pendingVendors || 0} pending review`} trendUp={true} icon={<Users className="w-5 h-5" />} color="emerald" />
+        <AnimatedStatCard title="Total Products" value={stats?.totalProducts || 0} trend={`${stats?.bannedProducts || 0} banned`} trendUp={false} icon={<Tags className="w-5 h-5" />} color="purple" />
+      </div>
 
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <Card className="lg:col-span-2 p-0 overflow-hidden">
@@ -195,8 +211,8 @@ export const PlatformAnalytics = () => (
         </div>
       </Card>
     </div>
-  </div>
-);
+  );
+};
 
 export const VendorApproval = () => {
   const [vendors, setVendors] = useState([]);
@@ -442,15 +458,20 @@ export const PromotionsCMS = () => (
 export const OrderOversight = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState('');
 
   React.useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [statusFilter]);
 
   const fetchOrders = async () => {
     try {
+      setLoading(true);
       const api = (await import('../../api/axiosInstance')).default;
-      const res = await api.get('/admin/orders');
+      let url = '/admin/orders?';
+      if (statusFilter) url += `status=${statusFilter}&`;
+
+      const res = await api.get(url);
       setOrders(res.data.map(o => ({
         id: o.id,
         buyer: o.buyer?.email || 'Unknown',
@@ -467,7 +488,20 @@ export const OrderOversight = () => {
 
   return (
     <div className="space-y-8 font-sans">
-      <PageHeader title="Order Oversight" subtitle={`${orders.length} total orders across the platform.`} />
+      <PageHeader 
+        title="Order Oversight" 
+        subtitle={`${orders.length} total orders across the platform.`} 
+        action={
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="bg-white/50 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-2 outline-none">
+            <option value="">All Statuses</option>
+            <option value="PAYMENT_PENDING">Payment Pending</option>
+            <option value="PAID">Paid</option>
+            <option value="CANCELLED">Cancelled</option>
+            <option value="SHIPPED">Shipped</option>
+            <option value="DELIVERED">Delivered</option>
+          </select>
+        }
+      />
       
       <Card className="p-0 overflow-hidden">
         <Table>

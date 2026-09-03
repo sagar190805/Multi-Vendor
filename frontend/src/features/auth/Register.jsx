@@ -13,7 +13,7 @@ export function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await register(email, password, '000000000', 'CUSTOMER');
+      await register(email, password, '000000000');
       navigate('/store');
     } catch (err) {
       setError('Registration failed. This email may already be in use.');

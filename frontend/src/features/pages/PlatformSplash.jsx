@@ -41,7 +41,7 @@ export function PlatformSplash() {
           </motion.p>
         </div>
 
-        <div className="grid md:grid-cols-2 max-w-4xl mx-auto gap-6 relative">
+        <div className="grid md:grid-cols-3 gap-6 relative">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -63,6 +63,23 @@ export function PlatformSplash() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.4 }}
+            onClick={() => handlePortalSelect('/seller/dashboard')}
+            className="group cursor-pointer p-10 rounded-[32px] border border-white/10 bg-white/[0.03] backdrop-blur-xl hover:bg-white/[0.08] transition-colors duration-300 flex flex-col items-start relative overflow-hidden"
+          >
+            <div className="w-14 h-14 rounded-2xl bg-white/10 text-white flex items-center justify-center mb-8 border border-white/10 group-hover:bg-primary/20 group-hover:text-primary group-hover:border-primary/30 transition-colors duration-300">
+              <Store className="w-6 h-6" />
+            </div>
+            <h2 className="text-2xl font-bold mb-4 tracking-tight">Seller Dashboard</h2>
+            <p className="text-white/50 text-base mb-8 line-clamp-2">Manage your inventory, fulfill orders, and scale your brand.</p>
+            <div className="mt-auto flex items-center gap-2 text-white/40 group-hover:text-white font-bold transition-colors">
+              Open Dashboard <ArrowRight className="w-4 h-4" />
+            </div>
+          </motion.div>
+
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
             onClick={() => handlePortalSelect('/admin/analytics')}
             className="group cursor-pointer p-10 rounded-[32px] border border-white/10 bg-white/[0.03] backdrop-blur-xl hover:bg-white/[0.08] transition-colors duration-300 flex flex-col items-start relative overflow-hidden"
           >

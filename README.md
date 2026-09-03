@@ -2,8 +2,7 @@
 
 A full-stack, three-portal marketplace application built with Spring Boot, React, and PostgreSQL. The platform facilitates end-to-end commerce with distinct interfaces and workflows for Buyers, Sellers, and Administrators.
 
-## 🏗 Architecture & Tech Stack
-
+## Architecture & Tech Stack
 - **Backend**: Java 17, Spring Boot 3.3.2, Spring Security (JWT), Spring Data JPA, Hibernate.
 - **Frontend**: React 18, Vite, Zustand (State Management), Tailwind CSS (Styling), React Router v6.
 - **Database**: PostgreSQL 16, Flyway (Schema Migration).
@@ -27,7 +26,7 @@ A full-stack, three-portal marketplace application built with Spring Boot, React
    - Catalog Moderation (Global visibility and Ban/Unban capabilities).
    - Platform Analytics & Order Oversight (Read-only cross-platform monitoring).
 
-## 🔒 Key Engineering Highlights
+## Key Engineering Highlights
 
 ### 1. Robust State Machines
 Order lifecycles follow a strict state machine enforced at the controller level. Edge cases are handled defensively:
@@ -42,7 +41,7 @@ Order lifecycles follow a strict state machine enforced at the controller level.
 - **IDOR Protection**: Seller endpoints strictly validate that the authenticated JWT corresponds to the `vendorId` of the requested resource. Sellers cannot mutate (or even view) orders or products belonging to competitors.
 - **Webhook Source of Truth**: The frontend payment callback (`/verify`) acts only as a fast UI transition. The actual database state and financial confirmation rely exclusively on the `X-Razorpay-Signature` HMAC-validated webhook from Razorpay's backend.
 
-## 🚀 Running Locally
+## Running Locally
 
 1. **Database**
    - Ensure PostgreSQL is running on `localhost:5432`.

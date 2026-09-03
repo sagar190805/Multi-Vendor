@@ -67,7 +67,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/seller/onboarding" element={<ProtectedRoute><SellerOnboarding /></ProtectedRoute>} />
 
-          <Route path="/seller" element={<ProtectedRoute allowedRole="SELLER"><SellerLayout /></ProtectedRoute>}>
+          <Route path="/seller" element={<ProtectedRoute allowedRole="CUSTOMER"><SellerLayout /></ProtectedRoute>}>
             <Route index element={<Navigate to="dashboard" />} />
             <Route path="dashboard" element={<SellerDashboardHome />} />
             <Route path="products" element={<ProductManager />} />

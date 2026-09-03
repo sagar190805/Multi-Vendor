@@ -33,7 +33,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**", "/api/products/**", "/api/payments/webhook").permitAll()
                 .requestMatchers("/api/seller/onboarding").hasAnyRole("CUSTOMER", "SELLER")
-                .requestMatchers("/api/seller/**").hasRole("SELLER")
+                .requestMatchers("/api/seller/**").hasAnyRole("CUSTOMER", "SELLER")
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/customer/**", "/api/payments/**").hasAnyRole("CUSTOMER", "ADMIN")
                 .anyRequest().authenticated()

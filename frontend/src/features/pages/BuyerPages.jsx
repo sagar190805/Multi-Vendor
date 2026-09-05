@@ -510,17 +510,16 @@ export const CheckoutPage = () => {
               <div className="space-y-4 mb-8">
                 <label className={`flex items-center gap-4 p-4 rounded-2xl border-2 cursor-pointer transition-all ${paymentMethod === 'card' ? 'border-primary bg-primary/5' : 'border-transparent bg-black/5 dark:bg-white/5'}`}>
                   <input type="radio" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} className="w-5 h-5 accent-primary" />
-                  <span className="font-bold">Credit / Debit Card (Mock)</span>
-                </label>
-                <label className={`flex items-center gap-4 p-4 rounded-2xl border-2 cursor-pointer transition-all ${paymentMethod === 'upi' ? 'border-primary bg-primary/5' : 'border-transparent bg-black/5 dark:bg-white/5'}`}>
-                  <input type="radio" checked={paymentMethod === 'upi'} onChange={() => setPaymentMethod('upi')} className="w-5 h-5 accent-primary" />
-                  <span className="font-bold">UPI / NetBanking (Mock)</span>
+                  <span className="font-bold flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                    Pay securely with Razorpay
+                  </span>
                 </label>
               </div>
               <div className="flex gap-4">
                 <Button variant="outline" size="lg" onClick={() => setStep(2)}>Back</Button>
                 <Button size="lg" className="flex-1" onClick={handlePlaceOrder} disabled={loading}>
-                  {loading ? 'Processing...' : 'Place Order & Pay'}
+                  {loading ? 'Processing...' : 'Place Order via Razorpay'}
                 </Button>
               </div>
             </div>

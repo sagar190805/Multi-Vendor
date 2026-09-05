@@ -45,4 +45,7 @@ public class Vendor {
 
     @Column(name = "rejection_reason", columnDefinition = "TEXT")
     private String rejectionReason;
+
+    @Column(name = "kyc_document_url", columnDefinition = "TEXT")
+    private String kycDocumentUrl;
 }

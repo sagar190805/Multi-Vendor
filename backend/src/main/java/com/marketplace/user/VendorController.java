@@ -41,6 +41,9 @@ public class VendorController {
         vendor.setDescription(request.get("description"));
         vendor.setBusinessDetails(request.get("businessDetails"));
         vendor.setBankAccountRef(request.get("bankDetails"));
+        if (request.containsKey("kycDocumentUrl")) {
+            vendor.setKycDocumentUrl(request.get("kycDocumentUrl"));
+        }
         vendor.setKycStatus("PENDING");
         
         vendorRepository.save(vendor);

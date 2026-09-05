@@ -19,6 +19,7 @@ export const SellerOnboarding = () => {
   const [description, setDescription] = useState('');
   const [businessDetails, setBusinessDetails] = useState('');
   const [bankDetails, setBankDetails] = useState('');
+  const [kycFile, setKycFile] = useState(null);
   const [status, setStatus] = useState('LOADING');
   const [rejectionReason, setRejectionReason] = useState(null);
 
@@ -40,8 +41,18 @@ export const SellerOnboarding = () => {
   const handleSubmit = async () => {
     try {
       const api = (await import('../../api/axiosInstance')).default;
+      let kycDocumentUrl = null;
+      if (kycFile) {
+        const reader = new FileReader();
+        const p = new Promise(res => {
+          reader.onload = () => res(reader.result);
+          reader.readAsDataURL(kycFile);
+        });
+        kycDocumentUrl = await p;
+      }
+      
       await api.post('/seller/onboarding', {
-        storeName, description, businessDetails, bankDetails
+        storeName, description, businessDetails, bankDetails, kycDocumentUrl
       });
       setStatus('PENDING');
     } catch (err) {
@@ -96,6 +107,12 @@ export const SellerOnboarding = () => {
           <div className="space-y-6">
             <input type="text" placeholder="Business Details (Tax ID, Address)" value={businessDetails} onChange={e => setBusinessDetails(e.target.value)} className="w-full p-4 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all font-medium" />
             <input type="text" placeholder="Bank Account Number" value={bankDetails} onChange={e => setBankDetails(e.target.value)} className="w-full p-4 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all font-medium" />
+            
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-bold text-muted-foreground ml-2">Upload KYC Document (ID Proof, Business License, etc.)</label>
+              <input type="file" onChange={e => setKycFile(e.target.files[0])} className="w-full p-4 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all font-medium file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer" />
+            </div>
+
             <div className="flex gap-4">
               <button onClick={() => setStep(1)} className="w-1/3 py-4 bg-black/5 dark:bg-white/5 text-foreground rounded-2xl font-bold text-lg hover:opacity-90 transition-all">Back</button>
               <button onClick={handleSubmit} className="w-2/3 py-4 bg-primary text-primary-foreground rounded-2xl font-bold text-lg hover:opacity-90 transition-all active:scale-[0.98] shadow-md">Submit Application</button>

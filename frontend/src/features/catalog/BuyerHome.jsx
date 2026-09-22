@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ProductCard } from '../../components/ui/ProductCard';
 import axios from 'axios';
@@ -26,7 +26,7 @@ export function BuyerHome() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get('${API_URL}/api/products')
+    axios.get(`/api/products`)
       .then(res => {
         // Map backend DTO to frontend expected format
         const formattedProducts = res.data.map(p => ({
@@ -55,7 +55,7 @@ export function BuyerHome() {
       >
         <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
         <div className="relative z-10">
-          <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-3">Flash sale — up to 50% off</h2>
+          <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-3">Flash sale â€” up to 50% off</h2>
           <p className="text-white/70 text-lg font-medium">Across 200+ vendors, ends in 6 hours</p>
         </div>
         <button 

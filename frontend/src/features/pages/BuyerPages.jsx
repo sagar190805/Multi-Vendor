@@ -205,7 +205,7 @@ export const ProductDetail = () => {
         setLoading(true);
         const axios = (await import('axios')).default;
         const [prodRes, revRes] = await Promise.all([
-          axios.get('${API_URL}/api/products'),
+          axios.get(`${API_URL}/api/products`),
           axios.get(`${API_URL}/api/products/${id}/reviews`).catch(e => ({ data: [] }))
         ]);
         
@@ -644,7 +644,7 @@ export const OrderHistory = () => {
                   <div key={item.id} className="flex items-center justify-between">
                     <div>
                       <p className="font-bold">{item.productTitle}</p>
-                      <p className="text-sm text-muted-foreground">Qty: {item.quantity} · Rs. {item.price}</p>
+                      <p className="text-sm text-muted-foreground">Qty: {item.quantity} Â· Rs. {item.price}</p>
                     </div>
                     {order.status === 'DELIVERED' && (
                       <Button variant="outline" size="sm" onClick={() => setReviewing(item.productId)}>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ProductCard } from '../../components/ui/ProductCard';
 import axios from 'axios';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -25,7 +26,7 @@ export function BuyerHome() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get('http://localhost:8080/api/products')
+    axios.get('${API_URL}/api/products')
       .then(res => {
         // Map backend DTO to frontend expected format
         const formattedProducts = res.data.map(p => ({

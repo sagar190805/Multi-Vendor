@@ -64,7 +64,7 @@ export const CategoryPage = () => {
       setLoading(true);
       try {
         const axios = (await import('axios')).default;
-        const res = await axios.get(`http://localhost:8080/api/products?category=${id}`);
+        const res = await axios.get(`${API_URL}/api/products?category=${id}`);
         const formatted = res.data.map(p => ({
           ...p,
           image: p.imageUrl || 'https://via.placeholder.com/300'
@@ -150,7 +150,7 @@ export const SearchResults = () => {
       setLoading(true);
       try {
         const axios = (await import('axios')).default;
-        const res = await axios.get(`http://localhost:8080/api/products?q=${encodeURIComponent(query)}`);
+        const res = await axios.get(`${API_URL}/api/products?q=${encodeURIComponent(query)}`);
         const formatted = res.data.map(p => ({
           ...p,
           image: p.imageUrl || 'https://via.placeholder.com/300'
@@ -205,8 +205,8 @@ export const ProductDetail = () => {
         setLoading(true);
         const axios = (await import('axios')).default;
         const [prodRes, revRes] = await Promise.all([
-          axios.get('http://localhost:8080/api/products'),
-          axios.get(`http://localhost:8080/api/products/${id}/reviews`).catch(e => ({ data: [] }))
+          axios.get('${API_URL}/api/products'),
+          axios.get(`${API_URL}/api/products/${id}/reviews`).catch(e => ({ data: [] }))
         ]);
         
         const p = prodRes.data.find(x => x.id === id);

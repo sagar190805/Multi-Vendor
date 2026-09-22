@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './features/auth/AuthContext';
 import { Login } from './features/auth/Login';
 import { SellerLogin } from './features/auth/SellerLogin';
+import { AdminLogin } from './features/auth/AdminLogin';
 import { Register } from './features/auth/Register';
 import { BuyerLayout } from './layouts/BuyerLayout';
 import { SellerLayout } from './layouts/SellerLayout';
@@ -27,7 +28,13 @@ import { PlatformSplash } from './features/pages/PlatformSplash';
 
 function ProtectedRoute({ children, allowedRole }) {
   const { user } = useAuth();
-  if (!user) return <Navigate to="/login" />;
+  
+  if (!user) {
+    if (window.location.pathname.startsWith('/admin')) {
+      return <Navigate to="/admin/login" />;
+    }
+    return <Navigate to="/login" />;
+  }
   
   const userRoleStr = String(user.role || '').toUpperCase();
   if (allowedRole && !userRoleStr.includes(allowedRole.toUpperCase())) {
@@ -67,6 +74,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/seller/login" element={<SellerLogin />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/seller/onboarding" element={<ProtectedRoute><SellerOnboarding /></ProtectedRoute>} />
 
           <Route path="/seller" element={<ProtectedRoute allowedRole="CUSTOMER"><SellerLayout /></ProtectedRoute>}>

@@ -63,7 +63,7 @@ export function PlatformSplash() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.4 }}
-            onClick={() => handlePortalSelect('/admin/analytics')}
+            onClick={() => handlePortalSelect('/admin/login')}
             className="group cursor-pointer p-10 rounded-[32px] border border-white/10 bg-white/[0.03] backdrop-blur-xl hover:bg-white/[0.08] transition-colors duration-300 flex flex-col items-start relative overflow-hidden"
           >
             <div className="w-14 h-14 rounded-2xl bg-white/10 text-white flex items-center justify-center mb-8 border border-white/10 group-hover:bg-purple-500/20 group-hover:text-purple-400 group-hover:border-purple-500/30 transition-colors duration-300">

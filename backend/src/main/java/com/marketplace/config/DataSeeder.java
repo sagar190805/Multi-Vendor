@@ -1,4 +1,4 @@
-﻿package com.marketplace.config;
+package com.marketplace.config;
 
 import com.marketplace.user.User;
 import com.marketplace.user.UserRepository;
@@ -27,4 +27,3 @@ public class DataSeeder implements CommandLineRunner {
         }
     }
 }
-

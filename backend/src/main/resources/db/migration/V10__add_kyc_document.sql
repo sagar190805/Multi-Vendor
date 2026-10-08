@@ -1,1 +1,1 @@
-ALTER TABLE vendors ADD COLUMN kyc_document_url VARCHAR(255);
+ALTER TABLE vendors ADD COLUMN IF NOT EXISTS kyc_document_url VARCHAR(255);
